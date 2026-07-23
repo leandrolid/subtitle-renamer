@@ -4,13 +4,7 @@ use std::path::Path;
 pub(crate) struct RenameLine<'a>(pub(crate) &'a Path, pub(crate) &'a Path);
 pub(crate) struct SkippedSubtitle<'a>(pub(crate) &'a str, pub(crate) &'a Path);
 
-pub(crate) enum FailureStep {
-    Link,
-    Unlink,
-}
-
 pub(crate) struct FailedRename<'a>(
-    pub(crate) FailureStep,
     pub(crate) &'a Path,
     pub(crate) &'a Path,
     pub(crate) &'a io::Error,
@@ -22,7 +16,7 @@ pub(crate) fn render_preview<W: Write>(
     skips: &[SkippedSubtitle<'_>],
 ) -> io::Result<()> {
     for RenameLine(source, target) in renames {
-        write!(writer, "RENAME: ")?;
+        write!(writer, "COPY: ")?;
         write_mapping(writer, source, target)?;
         writeln!(writer)?;
     }
@@ -45,16 +39,9 @@ pub(crate) fn render_partial_report<W: Write>(
         write_mapping(writer, source, target)?;
         writeln!(writer)?;
     }
-    let step = match failed.0 {
-        FailureStep::Link => "link",
-        FailureStep::Unlink => "unlink",
-    };
-    write!(writer, "FAILED [{step}]: ")?;
-    write_mapping(writer, failed.1, failed.2)?;
-    match failed.0 {
-        FailureStep::Link => writeln!(writer, ": {}", failed.3)?,
-        FailureStep::Unlink => writeln!(writer, ": {}; both paths may exist", failed.3)?,
-    }
+    write!(writer, "FAILED [copy]: ")?;
+    write_mapping(writer, failed.0, failed.1)?;
+    writeln!(writer, ": {}", failed.2)?;
     for RenameLine(source, target) in pending {
         write!(writer, "PENDING: ")?;
         write_mapping(writer, source, target)?;
@@ -64,7 +51,7 @@ pub(crate) fn render_partial_report<W: Write>(
 }
 
 pub(crate) fn render_success<W: Write>(writer: &mut W, count: usize) -> io::Result<()> {
-    writeln!(writer, "Renamed {count} file(s).")
+    writeln!(writer, "Copied {count} file(s).")
 }
 
 pub(crate) fn confirm_rename<R: BufRead, W: Write>(
@@ -73,10 +60,10 @@ pub(crate) fn confirm_rename<R: BufRead, W: Write>(
     count: usize,
 ) -> io::Result<bool> {
     if count == 0 {
-        writeln!(writer, "No files to rename.")?;
+        writeln!(writer, "No files to copy.")?;
         return Ok(false);
     }
-    write!(writer, "Rename {count} file(s)? [y/N] ")?;
+    write!(writer, "Copy {count} file(s)? [y/N] ")?;
     writer.flush()?;
     let mut line = String::new();
     if reader.read_line(&mut line)? == 0 {
@@ -125,7 +112,7 @@ mod tests {
         assert_eq!(
             text(output),
             concat!(
-                r#"RENAME: "bad\"name\\\n.srt" -> "target\tname.srt""#,
+                r#"COPY: "bad\"name\\\n.srt" -> "target\tname.srt""#,
                 "\nSKIP [no-match]: \"no-match\"",
                 "\nSKIP [ambiguous]: \"ambiguous\"",
                 "\nSKIP [multi-identifier]: \"multi-identifier\"",
@@ -150,49 +137,43 @@ mod tests {
         render_preview(&mut output, &[RenameLine(&source, &target)], &[]).expect("preview renders");
         assert_eq!(
             text(output),
-            r#"RENAME: "bad\u{fffd}\nname.srt" -> "good\u{fffd}.srt"
+            r#"COPY: "bad\u{fffd}\nname.srt" -> "good\u{fffd}.srt"
 "#,
         );
     }
 
     #[test]
-    fn renders_success_link_unlink_completed_failed_and_pending_reports() {
+    fn renders_copy_success_completed_failed_and_pending_reports() {
         let completed = [line("done.srt", "done.mkv.srt")];
         let pending = [line("next.srt", "next.mkv.srt")];
-        let link_error = io::Error::other("link denied");
-        let unlink_error = io::Error::other("unlink denied");
+        let copy_error = io::Error::other("copy denied");
         let mut output = Vec::new();
         render_success(&mut output, 3).expect("success renders");
         render_partial_report(
             &mut output,
             &completed,
-            &failed(FailureStep::Link, "bad.srt", "bad.mkv.srt", &link_error),
+            &failed("bad.srt", "bad.mkv.srt", &copy_error),
             &pending,
         )
-        .expect("link report renders");
+        .expect("first report renders");
         render_partial_report(
             &mut output,
             &[],
-            &failed(
-                FailureStep::Unlink,
-                "stuck.srt",
-                "stuck.mkv.srt",
-                &unlink_error,
-            ),
+            &failed("stuck.srt", "stuck.mkv.srt", &copy_error),
             &[],
         )
-        .expect("unlink report renders");
+        .expect("second report renders");
         assert_eq!(
             text(output),
             concat!(
-                "Renamed 3 file(s).\n",
+                "Copied 3 file(s).\n",
                 r#"COMPLETED: "done.srt" -> "done.mkv.srt""#,
                 "\n",
-                r#"FAILED [link]: "bad.srt" -> "bad.mkv.srt": link denied"#,
+                r#"FAILED [copy]: "bad.srt" -> "bad.mkv.srt": copy denied"#,
                 "\n",
                 r#"PENDING: "next.srt" -> "next.mkv.srt""#,
                 "\n",
-                r#"FAILED [unlink]: "stuck.srt" -> "stuck.mkv.srt": unlink denied; both paths may exist"#,
+                r#"FAILED [copy]: "stuck.srt" -> "stuck.mkv.srt": copy denied"#,
                 "\n",
             ),
         );
@@ -203,16 +184,16 @@ mod tests {
         for input in ["y\n", "Y\n", "yes\n", "YES\n", "YeS\n"] {
             let (confirmed, output) = confirm_with(input, 2).expect("input is present");
             assert!(confirmed);
-            assert_eq!(output, b"Rename 2 file(s)? [y/N] ");
+            assert_eq!(output, b"Copy 2 file(s)? [y/N] ");
         }
         let mut writer = FlushWriter(Vec::new(), false);
         assert!(confirm_rename(&mut Cursor::new(b"y\n"), &mut writer, 1).unwrap());
         assert!(writer.1);
-        assert_eq!(writer.0, b"Rename 1 file(s)? [y/N] ");
+        assert_eq!(writer.0, b"Copy 1 file(s)? [y/N] ");
         for input in ["\n", "n\n", "anything else\n"] {
             let (confirmed, output) = confirm_with(input, 1).expect("input is present");
             assert!(!confirmed);
-            assert_eq!(output, b"Rename 1 file(s)? [y/N] ");
+            assert_eq!(output, b"Copy 1 file(s)? [y/N] ");
         }
     }
 
@@ -222,10 +203,10 @@ mod tests {
         let mut output = Vec::new();
         let error = confirm_rename(&mut reader, &mut output, 1).expect_err("EOF is distinct");
         assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
-        assert_eq!(output, b"Rename 1 file(s)? [y/N] ");
+        assert_eq!(output, b"Copy 1 file(s)? [y/N] ");
         let mut output = Vec::new();
         assert!(!confirm_rename(&mut ReadPanic, &mut output, 0).expect("zero count does not read"));
-        assert_eq!(output, b"No files to rename.\n");
+        assert_eq!(output, b"No files to copy.\n");
     }
 
     fn confirm_with(input: &str, count: usize) -> io::Result<(bool, Vec<u8>)> {
@@ -239,13 +220,8 @@ mod tests {
         RenameLine(Path::new(source), Path::new(target))
     }
 
-    fn failed<'a>(
-        step: FailureStep,
-        source: &'a str,
-        target: &'a str,
-        error: &'a io::Error,
-    ) -> FailedRename<'a> {
-        FailedRename(step, Path::new(source), Path::new(target), error)
+    fn failed<'a>(source: &'a str, target: &'a str, error: &'a io::Error) -> FailedRename<'a> {
+        FailedRename(Path::new(source), Path::new(target), error)
     }
 
     fn text(bytes: Vec<u8>) -> String {

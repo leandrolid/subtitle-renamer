@@ -68,7 +68,13 @@ fn help_shows_public_contract_when_requested() {
         "{text}"
     );
     assert!(text.contains("Scans DIR only; does not recurse"), "{text}");
-    assert!(text.contains("Previews planned renames"), "{text}");
+    assert!(
+        text.contains(
+            "Subtitle files are copied to video-matching names while originals remain untouched"
+        ),
+        "{text}"
+    );
+    assert!(text.contains("Previews planned copies"), "{text}");
     assert!(text.contains("Never overwrites existing files"), "{text}");
 }
 
@@ -111,7 +117,7 @@ fn invalid_argument_exits_two_with_usage_on_stderr() {
 }
 
 #[test]
-fn renames_the_example_after_confirmation() {
+fn copies_the_example_after_confirmation() {
     // Given: one matching video and subtitle with distinct contents.
     let directory = TestDir::create();
     let video = directory.write("[anything - any] episode 01 - my tv show.mkv", b"video");
@@ -123,25 +129,27 @@ fn renames_the_example_after_confirmation() {
     // When: the user confirms the rendered plan.
     let output = run_directory(directory.path(), Some(b"yes\n"));
 
-    // Then: only the subtitle moves, stdout ends in the success line, and stderr is empty.
+    // Then: the subtitle remains and its target receives independent copied bytes.
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     let text = stdout(&output);
     assert!(
         text.contains(
-            r#"RENAME: "subtitle episode 1.ass" -> "[anything - any] episode 01 - my tv show.ass""#
+            r#"COPY: "subtitle episode 1.ass" -> "[anything - any] episode 01 - my tv show.ass""#
         ),
         "{text}"
     );
-    assert!(text.ends_with("Renamed 1 file(s).\n"), "{text}");
+    assert!(text.ends_with("Copied 1 file(s).\n"), "{text}");
     assert!(!text.contains("COMPLETED:"), "{text}");
     assert!(stderr(&output).is_empty());
-    assert!(!source.exists());
+    assert_eq!(fs::read(&source).unwrap(), b"subtitle bytes");
     assert_eq!(fs::read(&target).unwrap(), b"subtitle bytes");
     assert_eq!(fs::read(&video).unwrap(), b"video");
+    fs::write(&source, b"changed subtitle bytes").unwrap();
+    assert_eq!(fs::read(&target).unwrap(), b"subtitle bytes");
 }
 
 #[test]
-fn renames_one_pace_batch_after_one_confirmation() {
+fn copies_one_pace_batch_after_one_confirmation() {
     // Given: the six One Pace fixture names with distinct bytes.
     let directory = TestDir::create();
     let first_video = directory.write(
@@ -172,27 +180,33 @@ fn renames_one_pace_batch_after_one_confirmation() {
     // When: the user confirms the complete batch once.
     let output = run_directory(directory.path(), Some(b"yes\n"));
 
-    // Then: the exact ordered preview succeeds and only subtitle names move.
+    // Then: the exact ordered copy preview succeeds and sources remain independent.
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert_eq!(
         stdout(&output),
         concat!(
-            "RENAME: \"Enies Lobby 01.ass\" -> \"[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass\"\n",
-            "RENAME: \"Enies Lobby 02.ass\" -> \"[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass\"\n",
-            "RENAME: \"Enies Lobby 03.ass\" -> \"[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass\"\n",
-            "Rename 3 file(s)? [y/N] Renamed 3 file(s).\n",
+            "COPY: \"Enies Lobby 01.ass\" -> \"[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass\"\n",
+            "COPY: \"Enies Lobby 02.ass\" -> \"[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass\"\n",
+            "COPY: \"Enies Lobby 03.ass\" -> \"[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass\"\n",
+            "Copy 3 file(s)? [y/N] Copied 3 file(s).\n",
         )
     );
     assert!(stderr(&output).is_empty());
-    assert!(!first_source.exists());
-    assert!(!second_source.exists());
-    assert!(!third_source.exists());
-    assert_eq!(fs::read(first_target).unwrap(), b"subtitle one");
-    assert_eq!(fs::read(second_target).unwrap(), b"subtitle two");
-    assert_eq!(fs::read(third_target).unwrap(), b"subtitle three");
+    assert_eq!(fs::read(&first_source).unwrap(), b"subtitle one");
+    assert_eq!(fs::read(&second_source).unwrap(), b"subtitle two");
+    assert_eq!(fs::read(&third_source).unwrap(), b"subtitle three");
+    assert_eq!(fs::read(&first_target).unwrap(), b"subtitle one");
+    assert_eq!(fs::read(&second_target).unwrap(), b"subtitle two");
+    assert_eq!(fs::read(&third_target).unwrap(), b"subtitle three");
     assert_eq!(fs::read(first_video).unwrap(), b"video one");
     assert_eq!(fs::read(second_video).unwrap(), b"video two");
     assert_eq!(fs::read(third_video).unwrap(), b"video three");
+    fs::write(&first_source, b"changed subtitle one").unwrap();
+    fs::write(&second_source, b"changed subtitle two").unwrap();
+    fs::write(&third_source, b"changed subtitle three").unwrap();
+    assert_eq!(fs::read(&first_target).unwrap(), b"subtitle one");
+    assert_eq!(fs::read(&second_target).unwrap(), b"subtitle two");
+    assert_eq!(fs::read(&third_target).unwrap(), b"subtitle three");
 }
 
 #[test]
@@ -216,7 +230,7 @@ fn leaves_duplicate_bare_episode_videos_ambiguous() {
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert_eq!(
         stdout(&output),
-        "SKIP [ambiguous]: \"Enies Lobby 01.ass\"\nNo files to rename.\n"
+        "SKIP [ambiguous]: \"Enies Lobby 01.ass\"\nNo files to copy.\n"
     );
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(first_video).unwrap(), b"first video");
@@ -226,7 +240,7 @@ fn leaves_duplicate_bare_episode_videos_ambiguous() {
 
 #[test]
 fn declines_without_mutating_files() {
-    // Given: one executable rename plan.
+    // Given: one executable copy plan.
     let directory = TestDir::create();
     let video = directory.write("show S01E01.mkv", b"video");
     let source = directory.write("subtitle episode 1.srt", b"subtitle");
@@ -237,7 +251,7 @@ fn declines_without_mutating_files() {
 
     // Then: the process succeeds after one prompt without changing either path.
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
-    assert!(stdout(&output).ends_with("Rename 1 file(s)? [y/N] "));
+    assert!(stdout(&output).ends_with("Copy 1 file(s)? [y/N] "));
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(&video).unwrap(), b"video");
     assert_eq!(fs::read(&source).unwrap(), b"subtitle");
@@ -259,7 +273,7 @@ fn reports_ambiguous_work_without_reading_stdin() {
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert_eq!(
         stdout(&output),
-        "SKIP [ambiguous]: \"subtitle episode 1.srt\"\nNo files to rename.\n"
+        "SKIP [ambiguous]: \"subtitle episode 1.srt\"\nNo files to copy.\n"
     );
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(&first_video).unwrap(), b"first video");
@@ -269,7 +283,7 @@ fn reports_ambiguous_work_without_reading_stdin() {
 
 #[test]
 fn eof_after_preview_exits_one_without_mutation() {
-    // Given: one executable rename plan and a closed stdin pipe.
+    // Given: one executable copy plan and a closed stdin pipe.
     let directory = TestDir::create();
     let source = directory.write("subtitle episode 1.srt", b"subtitle");
     directory.write("show S01E01.mkv", b"video");
@@ -279,7 +293,7 @@ fn eof_after_preview_exits_one_without_mutation() {
 
     // Then: the prompt is rendered, the app exits one, and the source remains.
     assert_eq!(output.status.code(), Some(1));
-    assert!(stdout(&output).ends_with("Rename 1 file(s)? [y/N] "));
+    assert!(stdout(&output).ends_with("Copy 1 file(s)? [y/N] "));
     assert_eq!(stderr(&output), "unexpected end of file\n");
     assert_eq!(fs::read(&source).unwrap(), b"subtitle");
     assert!(!directory.path().join("show S01E01.srt").exists());
@@ -299,7 +313,7 @@ fn preserves_an_existing_destination_without_prompting() {
     // Then: the destination becomes a skip and is never modified.
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert!(stdout(&output).contains("SKIP [existing-destination]: \"subtitle episode 1.srt\""));
-    assert!(stdout(&output).ends_with("No files to rename.\n"));
+    assert!(stdout(&output).ends_with("No files to copy.\n"));
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(&source).unwrap(), b"subtitle");
     assert_eq!(fs::read(&target).unwrap(), b"sentinel");
@@ -339,7 +353,7 @@ fn reports_a_non_utf_subtitle_as_an_escaped_unsupported_name() {
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert_eq!(
         stdout(&output),
-        "SKIP [unsupported-name]: \"subtitle episode 1\\u{fffd}.srt\"\nNo files to rename.\n"
+        "SKIP [unsupported-name]: \"subtitle episode 1\\u{fffd}.srt\"\nNo files to copy.\n"
     );
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(&subtitle).unwrap(), b"subtitle");
@@ -368,7 +382,7 @@ fn excludes_a_non_utf_video_stem_from_candidate_selection() {
     assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
     assert_eq!(
         stdout(&output),
-        "SKIP [no-match]: \"subtitle episode 1.srt\"\nNo files to rename.\n"
+        "SKIP [no-match]: \"subtitle episode 1.srt\"\nNo files to copy.\n"
     );
     assert!(stderr(&output).is_empty());
     assert_eq!(fs::read(&video).unwrap(), b"video");
@@ -396,14 +410,14 @@ fn rejects_confirmation_bypass_flags() {
 
 #[test]
 fn reports_partial_failure_when_target_appears_after_prompt() {
-    // Given: three planned renames with no destinations at planning time.
+    // Given: three planned copies with no destinations at planning time.
     let directory = TestDir::create();
     let first_source = directory.write("a episode 1.srt", b"first");
     let second_source = directory.write("b episode 2.srt", b"second");
     let third_source = directory.write("c episode 3.srt", b"third");
-    directory.write("show episode 01.mkv", b"video one");
-    directory.write("show episode 02.mkv", b"video two");
-    directory.write("show episode 03.mkv", b"video three");
+    let first_video = directory.write("show episode 01.mkv", b"video one");
+    let second_video = directory.write("show episode 02.mkv", b"video two");
+    let third_video = directory.write("show episode 03.mkv", b"video three");
     let first_target = directory.path().join("show episode 01.srt");
     let second_target = directory.path().join("show episode 02.srt");
     let third_target = directory.path().join("show episode 03.srt");
@@ -425,7 +439,7 @@ fn reports_partial_failure_when_target_appears_after_prompt() {
                 Ok(0) => break Err(io::Error::from(io::ErrorKind::UnexpectedEof)),
                 Ok(_) => {
                     bytes.push(byte[0]);
-                    if bytes.ends_with(b"Rename 3 file(s)? [y/N] ") {
+                    if bytes.ends_with(b"Copy 3 file(s)? [y/N] ") {
                         break Ok(bytes);
                     }
                 }
@@ -455,14 +469,14 @@ fn reports_partial_failure_when_target_appears_after_prompt() {
     drop(stdin);
     let output = child.wait_with_output().unwrap();
 
-    // Then: the first move completes, the new destination is not overwritten, and the rest reports.
+    // Then: the first copy completes, the new destination is not overwritten, and the rest reports.
     assert_eq!(
         preview,
         concat!(
-            "RENAME: \"a episode 1.srt\" -> \"show episode 01.srt\"\n",
-            "RENAME: \"b episode 2.srt\" -> \"show episode 02.srt\"\n",
-            "RENAME: \"c episode 3.srt\" -> \"show episode 03.srt\"\n",
-            "Rename 3 file(s)? [y/N] "
+            "COPY: \"a episode 1.srt\" -> \"show episode 01.srt\"\n",
+            "COPY: \"b episode 2.srt\" -> \"show episode 02.srt\"\n",
+            "COPY: \"c episode 3.srt\" -> \"show episode 03.srt\"\n",
+            "Copy 3 file(s)? [y/N] "
         )
         .as_bytes()
     );
@@ -475,19 +489,22 @@ fn reports_partial_failure_when_target_appears_after_prompt() {
         "COMPLETED: \"a episode 1.srt\" -> \"show episode 01.srt\""
     );
     assert!(
-        lines[1].starts_with("FAILED [link]: \"b episode 2.srt\" -> \"show episode 02.srt\": "),
+        lines[1].starts_with("FAILED [copy]: \"b episode 2.srt\" -> \"show episode 02.srt\": "),
         "{report}"
     );
     assert_eq!(
         lines[2],
         "PENDING: \"c episode 3.srt\" -> \"show episode 03.srt\""
     );
-    assert!(!first_source.exists());
+    assert_eq!(fs::read(&first_source).unwrap(), b"first");
     assert_eq!(fs::read(&first_target).unwrap(), b"first");
     assert_eq!(fs::read(&second_source).unwrap(), b"second");
     assert_eq!(fs::read(&second_target).unwrap(), b"sentinel");
     assert_eq!(fs::read(&third_source).unwrap(), b"third");
     assert!(!third_target.exists());
+    assert_eq!(fs::read(first_video).unwrap(), b"video one");
+    assert_eq!(fs::read(second_video).unwrap(), b"video two");
+    assert_eq!(fs::read(third_video).unwrap(), b"video three");
 }
 
 static NEXT_DIR: AtomicUsize = AtomicUsize::new(0);

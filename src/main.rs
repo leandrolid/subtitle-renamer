@@ -15,14 +15,15 @@ Supported video extensions: mkv, mp4, avi, mov, m4v, webm\n\
 Supported subtitle extensions: ass, ssa, srt, vtt\n\
 Accepted episode forms: episode N, ep N, S<season>E<episode>, <season>x<episode>, final bare N at stem end or before trailing [metadata]\n\
 Scans DIR only; does not recurse into subdirectories.\n\
-Previews planned renames and skipped subtitles, then asks for confirmation before renaming.\n\
+Subtitle files are copied to video-matching names while originals remain untouched.\n\
+Previews planned copies and skipped subtitles, then asks for confirmation before copying.\n\
 Never overwrites existing files.";
 
 #[derive(Debug, Parser)]
 #[command(
     name = "subtitle-renamer",
     version,
-    about = "Rename subtitle files to match video episode filenames.",
+    about = "Copy subtitle files to video-matching names while originals remain untouched.",
     after_long_help = HELP_DETAILS,
 )]
 struct Cli {
@@ -69,15 +70,7 @@ fn run(directory: &Path) -> io::Result<RunOutcome> {
     if let Some(failure) = report.failed {
         let completed = rename_lines(&report.completed);
         let pending = rename_lines(&report.pending);
-        let failed = interaction::FailedRename(
-            match failure.operation {
-                renamer::ExecutionOperation::Link => interaction::FailureStep::Link,
-                renamer::ExecutionOperation::Unlink => interaction::FailureStep::Unlink,
-            },
-            &failure.source,
-            &failure.target,
-            &failure.error,
-        );
+        let failed = interaction::FailedRename(&failure.source, &failure.target, &failure.error);
         let stderr = io::stderr();
         let mut stderr = stderr.lock();
         interaction::render_partial_report(&mut stderr, &completed, &failed, &pending)?;

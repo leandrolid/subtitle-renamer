@@ -2,8 +2,8 @@ use std::{
     error::Error,
     ffi::{OsStr, OsString},
     fmt,
-    fs::{self, hard_link, remove_file},
-    io,
+    fs::{self, File, OpenOptions, remove_file},
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
@@ -74,15 +74,8 @@ pub(crate) struct BatchPlan {
     pub(crate) skipped: Vec<SkippedSubtitle>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ExecutionOperation {
-    Link,
-    Unlink,
-}
-
 #[derive(Debug)]
 pub(crate) struct ExecutionFailure {
-    pub(crate) operation: ExecutionOperation,
     pub(crate) source: PathBuf,
     pub(crate) target: PathBuf,
     pub(crate) error: io::Error,
@@ -192,40 +185,22 @@ fn sort_key(path: &Path) -> (String, OsString) {
 }
 
 pub(crate) fn execute(plans: &[RenamePlan]) -> ExecutionReport {
-    execute_with(
-        plans,
-        |source, target| hard_link(source, target),
-        |source| remove_file(source),
-    )
+    execute_with(plans, copy_exclusive)
 }
 
-fn execute_with<Link, Unlink>(
-    plans: &[RenamePlan],
-    link_fn: Link,
-    unlink_fn: Unlink,
-) -> ExecutionReport
+fn execute_with<Copy>(plans: &[RenamePlan], copy_fn: Copy) -> ExecutionReport
 where
-    Link: Fn(&Path, &Path) -> io::Result<()>,
-    Unlink: Fn(&Path) -> io::Result<()>,
+    Copy: Fn(&Path, &Path) -> io::Result<()>,
 {
     let mut completed = Vec::new();
 
     for (index, plan) in plans.iter().enumerate() {
-        let failure = match link_fn(&plan.source, &plan.target) {
-            Ok(()) => match unlink_fn(&plan.source) {
-                Ok(()) => {
-                    completed.push(plan.clone());
-                    continue;
-                }
-                Err(error) => ExecutionFailure {
-                    operation: ExecutionOperation::Unlink,
-                    source: plan.source.clone(),
-                    target: plan.target.clone(),
-                    error,
-                },
-            },
+        let failure = match copy_fn(&plan.source, &plan.target) {
+            Ok(()) => {
+                completed.push(plan.clone());
+                continue;
+            }
             Err(error) => ExecutionFailure {
-                operation: ExecutionOperation::Link,
                 source: plan.source.clone(),
                 target: plan.target.clone(),
                 error,
@@ -242,6 +217,42 @@ where
         completed,
         failed: None,
         pending: Vec::new(),
+    }
+}
+
+fn copy_exclusive(source: &Path, target: &Path) -> io::Result<()> {
+    let mut reader = File::open(source)?;
+    copy_reader_exclusive_with(&mut reader, target, |target| remove_file(target))
+}
+
+fn copy_reader_exclusive_with<R, Remove>(
+    reader: &mut R,
+    target: &Path,
+    remove_fn: Remove,
+) -> io::Result<()>
+where
+    R: Read,
+    Remove: Fn(&Path) -> io::Result<()>,
+{
+    let mut writer = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(target)?;
+    match io::copy(reader, &mut writer) {
+        Ok(_) => Ok(()),
+        Err(copy_error) => {
+            drop(writer);
+            match remove_fn(target) {
+                Ok(()) => Err(copy_error),
+                Err(cleanup_error) => Err(io::Error::new(
+                    copy_error.kind(),
+                    format!(
+                        "copy failed: {copy_error}; cleanup failed for {}: {cleanup_error}; partial target may remain",
+                        target.display()
+                    ),
+                )),
+            }
+        }
     }
 }
 
@@ -264,21 +275,39 @@ fn matches_extension(extension: &OsStr, supported: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        ExecutionOperation, RenamePlan, SkipReason, SkippedSubtitle, build_plan, discover_media,
-        execute, execute_with,
+        RenamePlan, SkipReason, SkippedSubtitle, build_plan, copy_reader_exclusive_with,
+        discover_media, execute,
     };
 
     use std::{
         ffi::OsString,
         fs,
         hash::{DefaultHasher, Hash, Hasher},
-        io,
+        io::{self, Read},
         path::{Path, PathBuf},
         process,
         sync::atomic::{AtomicUsize, Ordering},
     };
 
     static NEXT_DIR: AtomicUsize = AtomicUsize::new(0);
+
+    struct PartialFailReader {
+        has_yielded: bool,
+    }
+
+    impl Read for PartialFailReader {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            const PARTIAL_BYTES: &[u8] = b"partial bytes";
+
+            if self.has_yielded {
+                return Err(io::Error::from(io::ErrorKind::InvalidData));
+            }
+
+            self.has_yielded = true;
+            buffer[..PARTIAL_BYTES.len()].copy_from_slice(PARTIAL_BYTES);
+            Ok(PARTIAL_BYTES.len())
+        }
+    }
 
     struct TestDir {
         path: PathBuf,
@@ -335,14 +364,13 @@ mod tests {
     }
 
     #[test]
-    fn executes_with_hard_link_then_unlink() -> Result<(), Box<dyn std::error::Error>> {
-        // Given: a planned subtitle rename with known bytes and metadata-visible length.
+    fn copies_file_without_removing_source() -> Result<(), Box<dyn std::error::Error>> {
+        // Given: a planned subtitle copy with known bytes.
         let dir = TestDir::create()?;
         let source = dir.file("source.srt");
         let target = dir.file("show S01E01.srt");
         let bytes = b"subtitle bytes";
         fs::write(&source, bytes)?;
-        let length = fs::metadata(&source)?.len();
         let plan = RenamePlan {
             source: source.clone(),
             target: target.clone(),
@@ -351,15 +379,17 @@ mod tests {
         // When: the plan executes through the production filesystem operations.
         let report = execute(std::slice::from_ref(&plan));
 
-        // Then: the bytes survive at the target and the source name is removed.
+        // Then: both paths begin with the same bytes and stay independent.
         assert_eq!(report.completed.len(), 1);
         assert_eq!(report.completed[0].source, source);
         assert_eq!(report.completed[0].target, target);
         assert!(report.failed.is_none());
         assert!(report.pending.is_empty());
-        assert!(!source.exists());
+        assert!(source.exists());
+        assert_eq!(fs::read(&source)?, bytes);
         assert_eq!(fs::read(&target)?, bytes);
-        assert_eq!(fs::metadata(&target)?.len(), length);
+        fs::write(&source, b"changed source bytes")?;
+        assert_eq!(fs::read(&target)?, bytes);
         Ok(())
     }
 
@@ -380,13 +410,12 @@ mod tests {
         // When: the stale plan is executed.
         let report = execute(std::slice::from_ref(&plan));
 
-        // Then: hard-link failure preserves both original files without overwrite.
+        // Then: exclusive creation preserves both original files without overwrite.
         let failure = report
             .failed
             .as_ref()
-            .ok_or_else(|| io::Error::other("expected a link failure"))?;
+            .ok_or_else(|| io::Error::other("expected a copy failure"))?;
         assert!(report.completed.is_empty());
-        assert_eq!(failure.operation, ExecutionOperation::Link);
         assert_eq!(failure.source, source);
         assert_eq!(failure.target, target);
         assert_eq!(failure.error.kind(), io::ErrorKind::AlreadyExists);
@@ -397,17 +426,19 @@ mod tests {
     }
 
     #[test]
-    fn stops_on_first_link_failure_and_reports_partial_state()
+    fn stops_on_first_copy_failure_and_reports_partial_state()
     -> Result<(), Box<dyn std::error::Error>> {
-        // Given: a valid first plan, a missing second source, and a valid third plan.
+        // Given: a valid first plan, a blocked second target, and a valid third plan.
         let dir = TestDir::create()?;
         let first_source = dir.file("first.srt");
         let first_target = dir.file("show S01E01.srt");
-        let missing_source = dir.file("missing.srt");
-        let missing_target = dir.file("show S01E02.srt");
+        let failed_source = dir.file("second.srt");
+        let failed_target = dir.file("show S01E02.srt");
         let third_source = dir.file("third.srt");
         let third_target = dir.file("show S01E03.srt");
         fs::write(&first_source, b"first bytes")?;
+        fs::write(&failed_source, b"second bytes")?;
+        fs::write(&failed_target, b"existing target bytes")?;
         fs::write(&third_source, b"third bytes")?;
         let plans = [
             RenamePlan {
@@ -415,8 +446,8 @@ mod tests {
                 target: first_target.clone(),
             },
             RenamePlan {
-                source: missing_source.clone(),
-                target: missing_target.clone(),
+                source: failed_source.clone(),
+                target: failed_target.clone(),
             },
             RenamePlan {
                 source: third_source.clone(),
@@ -424,65 +455,71 @@ mod tests {
             },
         ];
 
-        // When: execution encounters the missing second source.
+        // When: execution encounters the second target created after planning.
         let report = execute(&plans);
 
         // Then: completed, failed, and pending entries retain input order and stop immediately.
         let failure = report
             .failed
             .as_ref()
-            .ok_or_else(|| io::Error::other("expected a link failure"))?;
+            .ok_or_else(|| io::Error::other("expected a copy failure"))?;
         assert_eq!(report.completed.len(), 1);
         assert_eq!(report.completed[0].source, first_source);
         assert_eq!(report.completed[0].target, first_target);
-        assert_eq!(failure.operation, ExecutionOperation::Link);
-        assert_eq!(failure.source, missing_source);
-        assert_eq!(failure.target, missing_target);
+        assert_eq!(failure.source, failed_source);
+        assert_eq!(failure.target, failed_target);
+        assert_eq!(failure.error.kind(), io::ErrorKind::AlreadyExists);
         assert_eq!(report.pending.len(), 1);
         assert_eq!(report.pending[0].source, third_source);
         assert_eq!(report.pending[0].target, third_target);
-        assert!(!first_source.exists());
+        assert_eq!(fs::read(&first_source)?, b"first bytes");
         assert_eq!(fs::read(&first_target)?, b"first bytes");
-        assert!(!missing_target.exists());
+        assert_eq!(fs::read(&failed_source)?, b"second bytes");
+        assert_eq!(fs::read(&failed_target)?, b"existing target bytes");
         assert_eq!(fs::read(&third_source)?, b"third bytes");
         assert!(!third_target.exists());
         Ok(())
     }
 
     #[test]
-    fn reports_unlink_failure_with_both_paths_present() -> Result<(), Box<dyn std::error::Error>> {
-        // Given: a valid plan and an injected unlink PermissionDenied error.
+    fn removes_incomplete_target_after_stream_failure() -> Result<(), Box<dyn std::error::Error>> {
+        // Given: a reader that yields bytes and then fails.
         let dir = TestDir::create()?;
-        let source = dir.file("source.srt");
         let target = dir.file("show S01E01.srt");
-        fs::write(&source, b"subtitle bytes")?;
-        let plans = [RenamePlan {
-            source: source.clone(),
-            target: target.clone(),
-        }];
+        let mut reader = PartialFailReader { has_yielded: false };
 
-        // When: the real hard link succeeds but unlink is denied.
-        let report = execute_with(
-            &plans,
-            |source, target| fs::hard_link(source, target),
-            |_| Err(io::Error::from(io::ErrorKind::PermissionDenied)),
-        );
+        // When: exclusive streaming copy encounters the reader error.
+        let error =
+            copy_reader_exclusive_with(&mut reader, &target, |target| fs::remove_file(target))
+                .unwrap_err();
 
-        // Then: the duplicate names remain and the report identifies unlink failure.
-        let failure = report
-            .failed
-            .as_ref()
-            .ok_or_else(|| io::Error::other("expected an unlink failure"))?;
-        assert!(report.completed.is_empty());
-        assert_eq!(failure.operation, ExecutionOperation::Unlink);
-        assert_eq!(failure.source, source);
-        assert_eq!(failure.target, target);
-        assert_eq!(failure.error.kind(), io::ErrorKind::PermissionDenied);
-        assert!(report.pending.is_empty());
-        assert!(source.exists());
-        assert!(target.exists());
-        assert_eq!(fs::read(&source)?, b"subtitle bytes");
-        assert_eq!(fs::read(&target)?, b"subtitle bytes");
+        // Then: the original stream error survives and its incomplete target is removed.
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(!target.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn reports_cleanup_failure_when_partial_target_may_remain()
+    -> Result<(), Box<dyn std::error::Error>> {
+        // Given: a reader that fails after writing bytes and a failing target remover.
+        let dir = TestDir::create()?;
+        let target = dir.file("show S01E01.srt");
+        let mut reader = PartialFailReader { has_yielded: false };
+
+        // When: stream cleanup also fails.
+        let error = copy_reader_exclusive_with(&mut reader, &target, |_| {
+            Err(io::Error::other("cleanup denied"))
+        })
+        .unwrap_err();
+
+        // Then: the stream kind and cleanup context explain that a partial target remains.
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        let text = error.to_string();
+        assert!(text.contains("cleanup failed"), "{text}");
+        assert!(text.contains("cleanup denied"), "{text}");
+        assert!(text.contains("partial target may remain"), "{text}");
+        fs::remove_file(&target)?;
         Ok(())
     }
 
