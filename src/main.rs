@@ -13,7 +13,7 @@ mod renamer;
 const HELP_DETAILS: &str = "\
 Supported video extensions: mkv, mp4, avi, mov, m4v, webm\n\
 Supported subtitle extensions: ass, ssa, srt, vtt\n\
-Accepted episode forms: episode N, ep N, S<season>E<episode>, <season>x<episode>\n\
+Accepted episode forms: episode N, ep N, S<season>E<episode>, <season>x<episode>, final bare N at stem end or before trailing [metadata]\n\
 Scans DIR only; does not recurse into subdirectories.\n\
 Previews planned renames and skipped subtitles, then asks for confirmation before renaming.\n\
 Never overwrites existing files.";

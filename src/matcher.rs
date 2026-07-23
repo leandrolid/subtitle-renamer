@@ -28,6 +28,12 @@ pub(crate) fn parse_episode_keys(stem: &str) -> EpisodeParseResult {
         }
     }
 
+    if let Some(key) = parse_bare_tail(bytes)
+        && !keys.contains(&key)
+    {
+        keys.push(key);
+    }
+
     match keys.as_slice() {
         [] => EpisodeParseResult::None,
         [key] => EpisodeParseResult::One(*key),
@@ -98,6 +104,72 @@ fn parse_x(bytes: &[u8], index: usize) -> Option<(EpisodeKey, usize)> {
         },
         end,
     ))
+}
+
+fn parse_bare_tail(bytes: &[u8]) -> Option<EpisodeKey> {
+    let mut inside_brackets = false;
+    for byte in bytes {
+        match *byte {
+            b'[' if inside_brackets => return None,
+            b'[' => inside_brackets = true,
+            b']' if !inside_brackets => return None,
+            b']' => inside_brackets = false,
+            _ => {}
+        }
+    }
+    if inside_brackets {
+        return None;
+    }
+
+    let mut end = bytes.len();
+    while end > 0 && bytes[end - 1].is_ascii_whitespace() {
+        end -= 1;
+    }
+    while end > 0 && bytes[end - 1] == b']' {
+        let open = bytes[..end - 1].iter().rposition(|byte| *byte == b'[')?;
+        if open + 1 == end - 1 {
+            return None;
+        }
+        end = open;
+        while end > 0 && bytes[end - 1].is_ascii_whitespace() {
+            end -= 1;
+        }
+    }
+
+    let digit_end = end;
+    while end > 0 && bytes[end - 1].is_ascii_digit() {
+        end -= 1;
+    }
+    let digit_start = end;
+    if !(1..=4).contains(&(digit_end - digit_start)) {
+        return None;
+    }
+
+    let mut before = digit_start;
+    while before > 0 && bytes[before - 1].is_ascii_whitespace() {
+        before -= 1;
+    }
+    if before > 0 && bytes[before - 1] == b'-' {
+        before -= 1;
+        while before > 0 && bytes[before - 1].is_ascii_whitespace() {
+            before -= 1;
+        }
+        if before > 0 && bytes[before - 1].is_ascii_digit() {
+            return None;
+        }
+    }
+    if digit_start > 0 && !bytes[digit_start - 1].is_ascii_whitespace() {
+        return None;
+    }
+
+    let (episode, parsed_end) = parse_number(bytes, digit_start, 4, 999)?;
+    if parsed_end != digit_end {
+        return None;
+    }
+    Some(EpisodeKey {
+        season: None,
+        episode,
+    })
 }
 
 fn parse_number(
@@ -188,6 +260,78 @@ mod tests {
             // Then: one normalized key is returned.
             assert_eq!(parsed, EpisodeParseResult::One(expected));
         }
+    }
+
+    #[test]
+    fn parses_strict_final_bare_episode_before_metadata() {
+        // Given: final bare episode numbers at stem end or before valid trailing metadata.
+        let cases = [
+            ("Enies Lobby 01", key(None, 1)),
+            (
+                "[One Pace][375-376] Enies Lobby 01 [1080p][785FB818]",
+                key(None, 1),
+            ),
+            (
+                "[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31]",
+                key(None, 2),
+            ),
+            (
+                "[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF]",
+                key(None, 3),
+            ),
+            ("Title 0001 [WEB][ABCDEF]", key(None, 1)),
+            ("episode 1 [meta]", key(None, 1)),
+            ("0", key(None, 0)),
+            ("Title 999", key(None, 999)),
+        ];
+
+        for (stem, expected) in cases {
+            // When: parsing the complete stem.
+            let parsed = parse_episode_keys(stem);
+
+            // Then: one normalized seasonless key is returned.
+            assert_eq!(parsed, EpisodeParseResult::One(expected), "{stem}");
+        }
+    }
+
+    #[test]
+    fn rejects_unsafe_bare_episode_shapes() {
+        // Given: numeric tails that are not strict bare episode tokens.
+        let cases = [
+            "movie 2024",
+            "[One Pace][375-376]",
+            "Title [1080p]",
+            "Title [ABC123]",
+            "Title 001v2",
+            "Title 001-002",
+            "Title 001 - 002",
+            "Title 01 extra",
+            "Title 1000",
+            "Title 00001",
+            "Title 01 [broken",
+            "Title [broken 01",
+            "Title ] 01",
+            "Title [[meta]] 01",
+            "Title 01 []",
+            "Title_01",
+        ];
+
+        for stem in cases {
+            // When: parsing an unsafe bare-number shape.
+            let parsed = parse_episode_keys(stem);
+
+            // Then: no bare episode key is inferred.
+            assert_eq!(parsed, EpisodeParseResult::None, "{stem}");
+        }
+
+        // Given: one labeled key plus a different valid bare tail.
+        let distinct = "episode 2 01";
+
+        // When: both identifiers are collected.
+        let parsed = parse_episode_keys(distinct);
+
+        // Then: the stem remains unsafe because it has multiple identifiers.
+        assert_eq!(parsed, EpisodeParseResult::Multiple);
     }
 
     #[test]

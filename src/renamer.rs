@@ -632,6 +632,72 @@ mod tests {
     }
 
     #[test]
+    fn plans_one_pace_fixture_names_without_metadata_false_positives()
+    -> Result<(), Box<dyn std::error::Error>> {
+        // Given: copied One Pace names plus a separate duplicate-key fixture.
+        let dir = TestDir::create()?;
+        let fixture_names = [
+            "[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].mkv",
+            "[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].mkv",
+            "[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].mkv",
+            "Enies Lobby 01.ass",
+            "Enies Lobby 02.ass",
+            "Enies Lobby 03.ass",
+        ];
+        for (index, name) in fixture_names.iter().enumerate() {
+            fs::write(dir.file(name), format!("fixture {index}"))?;
+        }
+        let before = snapshot_files(&dir)?;
+        let duplicate_dir = TestDir::create()?;
+        fs::write(duplicate_dir.file("Arc 01 [WEB].mkv"), b"first video")?;
+        fs::write(
+            duplicate_dir.file("Other Arc 01 [BluRay].mkv"),
+            b"second video",
+        )?;
+        fs::write(duplicate_dir.file("Arc 01.ass"), b"subtitle")?;
+        let duplicate_before = snapshot_files(&duplicate_dir)?;
+
+        // When: both directories are planned twice from fresh inventories.
+        let batch = plan(&dir)?;
+        let repeated = plan(&dir)?;
+        let duplicate_batch = plan(&duplicate_dir)?;
+        let duplicate_repeated = plan(&duplicate_dir)?;
+
+        // Then: exact mappings are stable, duplicate keys stay ambiguous, and planning is immutable.
+        assert_eq!(repeated, batch);
+        assert_eq!(
+            batch.renames,
+            vec![
+                RenamePlan {
+                    source: dir.file("Enies Lobby 01.ass"),
+                    target: dir.file("[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass"),
+                },
+                RenamePlan {
+                    source: dir.file("Enies Lobby 02.ass"),
+                    target: dir.file("[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass"),
+                },
+                RenamePlan {
+                    source: dir.file("Enies Lobby 03.ass"),
+                    target: dir.file("[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass"),
+                },
+            ]
+        );
+        assert!(batch.skipped.is_empty());
+        assert_eq!(duplicate_repeated, duplicate_batch);
+        assert!(duplicate_batch.renames.is_empty());
+        assert_eq!(
+            duplicate_batch.skipped,
+            vec![SkippedSubtitle {
+                source: duplicate_dir.file("Arc 01.ass"),
+                reason: SkipReason::Ambiguous,
+            }]
+        );
+        assert_eq!(snapshot_files(&dir)?, before);
+        assert_eq!(snapshot_files(&duplicate_dir)?, duplicate_before);
+        Ok(())
+    }
+
+    #[test]
     fn plans_seasons_and_all_parse_outcomes() -> Result<(), Box<dyn std::error::Error>> {
         // Given: compatible seasons, a unique seasonless fallback, and ineligible videos.
         let dir = TestDir::create()?;

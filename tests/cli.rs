@@ -63,6 +63,10 @@ fn help_shows_public_contract_when_requested() {
         text.contains("episode N, ep N, S<season>E<episode>, <season>x<episode>"),
         "{text}"
     );
+    assert!(
+        text.contains("final bare N at stem end or before trailing [metadata]"),
+        "{text}"
+    );
     assert!(text.contains("Scans DIR only; does not recurse"), "{text}");
     assert!(text.contains("Previews planned renames"), "{text}");
     assert!(text.contains("Never overwrites existing files"), "{text}");
@@ -134,6 +138,90 @@ fn renames_the_example_after_confirmation() {
     assert!(!source.exists());
     assert_eq!(fs::read(&target).unwrap(), b"subtitle bytes");
     assert_eq!(fs::read(&video).unwrap(), b"video");
+}
+
+#[test]
+fn renames_one_pace_batch_after_one_confirmation() {
+    // Given: the six One Pace fixture names with distinct bytes.
+    let directory = TestDir::create();
+    let first_video = directory.write(
+        "[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].mkv",
+        b"video one",
+    );
+    let second_video = directory.write(
+        "[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].mkv",
+        b"video two",
+    );
+    let third_video = directory.write(
+        "[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].mkv",
+        b"video three",
+    );
+    let first_source = directory.write("Enies Lobby 01.ass", b"subtitle one");
+    let second_source = directory.write("Enies Lobby 02.ass", b"subtitle two");
+    let third_source = directory.write("Enies Lobby 03.ass", b"subtitle three");
+    let first_target = directory
+        .path()
+        .join("[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass");
+    let second_target = directory
+        .path()
+        .join("[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass");
+    let third_target = directory
+        .path()
+        .join("[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass");
+
+    // When: the user confirms the complete batch once.
+    let output = run_directory(directory.path(), Some(b"yes\n"));
+
+    // Then: the exact ordered preview succeeds and only subtitle names move.
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    assert_eq!(
+        stdout(&output),
+        concat!(
+            "RENAME: \"Enies Lobby 01.ass\" -> \"[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass\"\n",
+            "RENAME: \"Enies Lobby 02.ass\" -> \"[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass\"\n",
+            "RENAME: \"Enies Lobby 03.ass\" -> \"[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass\"\n",
+            "Rename 3 file(s)? [y/N] Renamed 3 file(s).\n",
+        )
+    );
+    assert!(stderr(&output).is_empty());
+    assert!(!first_source.exists());
+    assert!(!second_source.exists());
+    assert!(!third_source.exists());
+    assert_eq!(fs::read(first_target).unwrap(), b"subtitle one");
+    assert_eq!(fs::read(second_target).unwrap(), b"subtitle two");
+    assert_eq!(fs::read(third_target).unwrap(), b"subtitle three");
+    assert_eq!(fs::read(first_video).unwrap(), b"video one");
+    assert_eq!(fs::read(second_video).unwrap(), b"video two");
+    assert_eq!(fs::read(third_video).unwrap(), b"video three");
+}
+
+#[test]
+fn leaves_duplicate_bare_episode_videos_ambiguous() {
+    // Given: one bare-key subtitle and two metadata-rich videos with the same key.
+    let directory = TestDir::create();
+    let first_video = directory.write(
+        "[One Pace][375-376] Enies Lobby 01 [1080p][FIRST].mkv",
+        b"first video",
+    );
+    let second_video = directory.write(
+        "[One Pace][900] Other Arc 01 [720p][SECOND].mp4",
+        b"second video",
+    );
+    let subtitle = directory.write("Enies Lobby 01.ass", b"subtitle");
+
+    // When: the binary runs with stdin closed.
+    let output = run_directory(directory.path(), None);
+
+    // Then: ambiguity is reported without a prompt or any mutation.
+    assert_eq!(output.status.code(), Some(0), "stderr: {}", stderr(&output));
+    assert_eq!(
+        stdout(&output),
+        "SKIP [ambiguous]: \"Enies Lobby 01.ass\"\nNo files to rename.\n"
+    );
+    assert!(stderr(&output).is_empty());
+    assert_eq!(fs::read(first_video).unwrap(), b"first video");
+    assert_eq!(fs::read(second_video).unwrap(), b"second video");
+    assert_eq!(fs::read(subtitle).unwrap(), b"subtitle");
 }
 
 #[test]
