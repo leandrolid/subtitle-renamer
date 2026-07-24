@@ -5,10 +5,9 @@ use std::{
 };
 
 use clap::Parser;
+use subtitle_renamer::{PlannedCopy, execute_plan, plan_directory};
 
 mod interaction;
-mod matcher;
-mod renamer;
 
 const HELP_DETAILS: &str = "\
 Supported video extensions: mkv, mp4, avi, mov, m4v, webm\n\
@@ -49,42 +48,46 @@ enum RunOutcome {
 }
 
 fn run(directory: &Path) -> io::Result<RunOutcome> {
-    let batch = renamer::plan(directory).map_err(io::Error::other)?;
-    let renames = rename_lines(&batch.renames);
-    let skips = batch
-        .skipped
-        .iter()
-        .map(|skipped| interaction::SkippedSubtitle(skipped.reason.as_str(), &skipped.source))
-        .collect::<Vec<_>>();
+    let batch = plan_directory(directory).map_err(io::Error::other)?;
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
 
-    interaction::render_preview(&mut stdout, &renames, &skips)?;
+    {
+        let renames = rename_lines(batch.copies());
+        let skips = batch
+            .skipped()
+            .iter()
+            .map(|skipped| {
+                interaction::SkippedSubtitle(skipped.reason().as_str(), skipped.source())
+            })
+            .collect::<Vec<_>>();
+        interaction::render_preview(&mut stdout, &renames, &skips)?;
+    }
     let stdin = io::stdin();
     let mut stdin = stdin.lock();
-    if !interaction::confirm_rename(&mut stdin, &mut stdout, batch.renames.len())? {
+    if !interaction::confirm_rename(&mut stdin, &mut stdout, batch.copies().len())? {
         return Ok(RunOutcome::Completed);
     }
 
-    let report = renamer::execute(&batch.renames);
-    if let Some(failure) = report.failed {
-        let completed = rename_lines(&report.completed);
-        let pending = rename_lines(&report.pending);
-        let failed = interaction::FailedRename(&failure.source, &failure.target, &failure.error);
+    let report = execute_plan(batch);
+    if let Some(failure) = report.failure() {
+        let completed = rename_lines(report.completed());
+        let pending = rename_lines(report.pending());
+        let failed = interaction::FailedRename(failure.source(), failure.target(), failure.error());
         let stderr = io::stderr();
         let mut stderr = stderr.lock();
         interaction::render_partial_report(&mut stderr, &completed, &failed, &pending)?;
         return Ok(RunOutcome::ExecutionFailed);
     }
 
-    interaction::render_success(&mut stdout, batch.renames.len())?;
+    interaction::render_success(&mut stdout, report.completed().len())?;
     Ok(RunOutcome::Completed)
 }
 
-fn rename_lines(plans: &[renamer::RenamePlan]) -> Vec<interaction::RenameLine<'_>> {
+fn rename_lines(plans: &[PlannedCopy]) -> Vec<interaction::RenameLine<'_>> {
     plans
         .iter()
-        .map(|plan| interaction::RenameLine(&plan.source, &plan.target))
+        .map(|plan| interaction::RenameLine(plan.source(), plan.target()))
         .collect()
 }
 

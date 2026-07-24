@@ -2,9 +2,9 @@ use std::ffi::OsString;
 
 use crate::matcher::{EpisodeParseResult, episode_keys_are_compatible, parse_episode_keys};
 
-use super::{BatchPlan, MediaInventory, RenamePlan, SkipReason, SkippedSubtitle, sort_key};
+use super::{CopyPlan, MediaInventory, PlannedCopy, SkipReason, SkippedSubtitle, sort_key};
 
-pub(super) fn build_plan(inventory: &MediaInventory) -> BatchPlan {
+pub(super) fn build_plan(inventory: &MediaInventory) -> CopyPlan {
     let videos = inventory
         .videos
         .iter()
@@ -73,7 +73,7 @@ pub(super) fn build_plan(inventory: &MediaInventory) -> BatchPlan {
                 reason: SkipReason::ExistingDestination,
             });
         } else {
-            candidates.push(RenamePlan {
+            candidates.push(PlannedCopy {
                 source: subtitle.path.clone(),
                 target,
             });
@@ -99,5 +99,5 @@ pub(super) fn build_plan(inventory: &MediaInventory) -> BatchPlan {
     renames.sort_by_key(|plan| sort_key(&plan.source));
     skipped.sort_by_key(|subtitle| sort_key(&subtitle.source));
 
-    BatchPlan { renames, skipped }
+    CopyPlan { renames, skipped }
 }

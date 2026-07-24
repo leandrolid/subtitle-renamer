@@ -4,5 +4,14 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+[features]
+default = ["cli"]
+cli = ["dep:clap"]
+
 [dependencies]
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive"], optional = true }
+
+[[bin]]
+name = "subtitle-renamer"
+path = "src/main.rs"
+required-features = ["cli"]

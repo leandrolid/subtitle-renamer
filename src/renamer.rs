@@ -32,7 +32,7 @@ struct SubtitleFile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum SkipReason {
+pub enum SkipReason {
     UnsupportedName,
     MultiIdentifier,
     NoMatch,
@@ -43,7 +43,7 @@ pub(crate) enum SkipReason {
 }
 
 impl SkipReason {
-    pub(crate) const fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::UnsupportedName => "unsupported-name",
             Self::MultiIdentifier => "multi-identifier",
@@ -57,39 +57,97 @@ impl SkipReason {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct RenamePlan {
-    pub(crate) source: PathBuf,
-    pub(crate) target: PathBuf,
+pub struct PlannedCopy {
+    source: PathBuf,
+    target: PathBuf,
+}
+
+impl PlannedCopy {
+    pub fn source(&self) -> &Path {
+        &self.source
+    }
+
+    pub fn target(&self) -> &Path {
+        &self.target
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct SkippedSubtitle {
-    pub(crate) source: PathBuf,
-    pub(crate) reason: SkipReason,
+pub struct SkippedSubtitle {
+    source: PathBuf,
+    reason: SkipReason,
+}
+
+impl SkippedSubtitle {
+    pub fn source(&self) -> &Path {
+        &self.source
+    }
+
+    pub const fn reason(&self) -> SkipReason {
+        self.reason
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct BatchPlan {
-    pub(crate) renames: Vec<RenamePlan>,
-    pub(crate) skipped: Vec<SkippedSubtitle>,
+pub struct CopyPlan {
+    renames: Vec<PlannedCopy>,
+    skipped: Vec<SkippedSubtitle>,
+}
+
+impl CopyPlan {
+    pub fn copies(&self) -> &[PlannedCopy] {
+        &self.renames
+    }
+
+    pub fn skipped(&self) -> &[SkippedSubtitle] {
+        &self.skipped
+    }
 }
 
 #[derive(Debug)]
-pub(crate) struct ExecutionFailure {
-    pub(crate) source: PathBuf,
-    pub(crate) target: PathBuf,
-    pub(crate) error: io::Error,
+pub struct ExecutionFailure {
+    source: PathBuf,
+    target: PathBuf,
+    error: io::Error,
+}
+
+impl ExecutionFailure {
+    pub fn source(&self) -> &Path {
+        &self.source
+    }
+
+    pub fn target(&self) -> &Path {
+        &self.target
+    }
+
+    pub fn error(&self) -> &io::Error {
+        &self.error
+    }
 }
 
 #[derive(Debug)]
-pub(crate) struct ExecutionReport {
-    pub(crate) completed: Vec<RenamePlan>,
-    pub(crate) failed: Option<ExecutionFailure>,
-    pub(crate) pending: Vec<RenamePlan>,
+pub struct ExecutionReport {
+    completed: Vec<PlannedCopy>,
+    failed: Option<ExecutionFailure>,
+    pending: Vec<PlannedCopy>,
+}
+
+impl ExecutionReport {
+    pub fn completed(&self) -> &[PlannedCopy] {
+        &self.completed
+    }
+
+    pub fn failure(&self) -> Option<&ExecutionFailure> {
+        self.failed.as_ref()
+    }
+
+    pub fn pending(&self) -> &[PlannedCopy] {
+        &self.pending
+    }
 }
 
 #[derive(Debug)]
-pub(crate) struct DiscoverError {
+pub struct DiscoverError {
     operation: &'static str,
     path: PathBuf,
     source: io::Error,
@@ -123,7 +181,7 @@ impl Error for DiscoverError {
     }
 }
 
-pub(crate) fn plan(directory: &Path) -> Result<BatchPlan, DiscoverError> {
+pub fn plan_directory(directory: &Path) -> Result<CopyPlan, DiscoverError> {
     let inventory = discover_media(directory)?;
     Ok(build_plan(&inventory))
 }
@@ -184,11 +242,15 @@ fn sort_key(path: &Path) -> (String, OsString) {
     (name.to_string_lossy().to_ascii_lowercase(), name)
 }
 
-pub(crate) fn execute(plans: &[RenamePlan]) -> ExecutionReport {
+pub fn execute_plan(plan: CopyPlan) -> ExecutionReport {
+    execute(&plan.renames)
+}
+
+fn execute(plans: &[PlannedCopy]) -> ExecutionReport {
     execute_with(plans, copy_exclusive)
 }
 
-fn execute_with<Copy>(plans: &[RenamePlan], copy_fn: Copy) -> ExecutionReport
+fn execute_with<Copy>(plans: &[PlannedCopy], copy_fn: Copy) -> ExecutionReport
 where
     Copy: Fn(&Path, &Path) -> io::Result<()>,
 {
@@ -275,7 +337,7 @@ fn matches_extension(extension: &OsStr, supported: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        RenamePlan, SkipReason, SkippedSubtitle, build_plan, copy_reader_exclusive_with,
+        PlannedCopy, SkipReason, SkippedSubtitle, build_plan, copy_reader_exclusive_with,
         discover_media, execute,
     };
 
@@ -358,7 +420,7 @@ mod tests {
         hasher.finish()
     }
 
-    fn plan(dir: &TestDir) -> Result<super::BatchPlan, Box<dyn std::error::Error>> {
+    fn plan(dir: &TestDir) -> Result<super::CopyPlan, Box<dyn std::error::Error>> {
         let inventory = discover_media(dir.path())?;
         Ok(build_plan(&inventory))
     }
@@ -371,7 +433,7 @@ mod tests {
         let target = dir.file("show S01E01.srt");
         let bytes = b"subtitle bytes";
         fs::write(&source, bytes)?;
-        let plan = RenamePlan {
+        let plan = PlannedCopy {
             source: source.clone(),
             target: target.clone(),
         };
@@ -401,7 +463,7 @@ mod tests {
         let source = dir.file("source.srt");
         let target = dir.file("show S01E01.srt");
         fs::write(&source, b"source bytes")?;
-        let plan = RenamePlan {
+        let plan = PlannedCopy {
             source: source.clone(),
             target: target.clone(),
         };
@@ -441,15 +503,15 @@ mod tests {
         fs::write(&failed_target, b"existing target bytes")?;
         fs::write(&third_source, b"third bytes")?;
         let plans = [
-            RenamePlan {
+            PlannedCopy {
                 source: first_source.clone(),
                 target: first_target.clone(),
             },
-            RenamePlan {
+            PlannedCopy {
                 source: failed_source.clone(),
                 target: failed_target.clone(),
             },
-            RenamePlan {
+            PlannedCopy {
                 source: third_source.clone(),
                 target: third_target.clone(),
             },
@@ -656,7 +718,7 @@ mod tests {
         assert_eq!(repeated, batch);
         assert_eq!(
             batch.renames,
-            vec![RenamePlan {
+            vec![PlannedCopy {
                 source: subtitle,
                 target: dir.file("[anything - any] episode 01 - my tv show.ass"),
             }]
@@ -705,15 +767,15 @@ mod tests {
         assert_eq!(
             batch.renames,
             vec![
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("Enies Lobby 01.ass"),
                     target: dir.file("[One Pace][375-376] Enies Lobby 01 [1080p][785FB818].ass"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("Enies Lobby 02.ass"),
                     target: dir.file("[One Pace][376-378] Enies Lobby 02 [1080p][495CDC31].ass"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("Enies Lobby 03.ass"),
                     target: dir.file("[One Pace][379-380] Enies Lobby 03 [1080p][861EE2FF].ass"),
                 },
@@ -769,19 +831,19 @@ mod tests {
         assert_eq!(
             batch.renames,
             vec![
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("fallback episode 2.srt"),
                     target: dir.file("only S03E02.srt"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("repeated S01E03 1x3.srt"),
                     target: dir.file("show S01E03.srt"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("same S01E01.srt"),
                     target: dir.file("show S01E01.srt"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("same S02E01.srt"),
                     target: dir.file("show S02E01.srt"),
                 },
@@ -885,11 +947,11 @@ mod tests {
         assert_eq!(
             batch.renames,
             vec![
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("A S01E04.pt-BR.vTt"),
                     target: dir.file("show S01E04.vTt"),
                 },
-                RenamePlan {
+                PlannedCopy {
                     source: dir.file("z S01E04.eng.ASS"),
                     target: dir.file("show S01E04.ASS"),
                 },
