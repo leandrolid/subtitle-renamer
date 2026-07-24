@@ -19,11 +19,12 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
       - run: cargo fmt --all -- --check
-      - run: cargo clippy --all-targets --all-features -- -D warnings
-      - run: cargo test --locked
-      - run: cargo test --locked --test cli
-      - run: cargo test --locked --no-default-features --lib
+      - run: cargo clippy -p subtitle-renamer -p subtitle-renamer-cli --all-targets --all-features -- -D warnings
+      - run: cargo test -p subtitle-renamer --locked
+      - run: cargo test -p subtitle-renamer-cli --locked
 
   desktop-quality:
     name: Desktop quality (${{ matrix.os }})
@@ -44,7 +45,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
-      - run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
-      - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
-      - run: cargo test --manifest-path src-tauri/Cargo.toml --locked
+          workspaces: .
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy -p subtitle-renamer-desktop --all-targets --all-features -- -D warnings
+      - run: cargo test -p subtitle-renamer-desktop --locked
