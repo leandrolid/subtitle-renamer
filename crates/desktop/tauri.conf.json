@@ -1,11 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Subtitle Renamer",
-  "mainBinaryName": "subtitle-renamer",
+  "mainBinaryName": "subtitle-renamer-desktop",
   "version": "0.1.0",
   "identifier": "de.lidco.subtitlerenamer",
   "build": {
-    "frontendDist": "../ui"
+    "frontendDist": "../../ui"
   },
   "app": {
     "withGlobalTauri": true,

@@ -1,0 +1,13 @@
+[package]
+name = "subtitle-renamer-cli"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "subtitle-renamer"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+subtitle-renamer = { path = "../core" }

@@ -22,13 +22,13 @@ fn validate_config(raw: &str) -> Result<(), String> {
         .map_err(|error| error.to_string())?;
 
     if config.product_name.as_deref() != Some("Subtitle Renamer")
-        || config.main_binary_name.as_deref() != Some("subtitle-renamer")
+        || config.main_binary_name.as_deref() != Some("subtitle-renamer-desktop")
         || config.version.as_deref() != Some("0.1.0")
         || config.identifier != "de.lidco.subtitlerenamer"
     {
         return Err("desktop identity changed".into());
     }
-    if config.build.frontend_dist != Some(FrontendDist::Directory(PathBuf::from("../ui")))
+    if config.build.frontend_dist != Some(FrontendDist::Directory(PathBuf::from("../../ui")))
         || config.build.dev_url.is_some()
         || config.build.before_dev_command.is_some()
         || config.build.before_build_command.is_some()
@@ -176,8 +176,8 @@ fn static_frontend_contract_has_no_server_commands() {
 
     // When: the static frontend contract is inspected.
     // Then: it points to the checked-in UI without development tooling.
-    assert!(configuration.contains("\"frontendDist\": \"../ui\""));
-    assert!(configuration.contains("\"mainBinaryName\": \"subtitle-renamer\""));
+    assert!(configuration.contains("\"frontendDist\": \"../../ui\""));
+    assert!(configuration.contains("\"mainBinaryName\": \"subtitle-renamer-desktop\""));
     for forbidden_key in ["devUrl", "beforeDevCommand", "beforeBuildCommand"] {
         assert!(!configuration.contains(forbidden_key), "{forbidden_key}");
     }
@@ -211,12 +211,12 @@ fn configuration_guard_rejects_forbidden_policy_changes() {
         CONFIG.replace(CSP, "default-src 'self'; connect-src https://example.com"),
         CONFIG.replace("de.lidco.subtitlerenamer", "com.example.stale"),
         CONFIG.replace(
-            "\"frontendDist\": \"../ui\"",
+            "\"frontendDist\": \"../../ui\"",
             "\"frontendDist\": \"https://example.com\"",
         ),
         CONFIG.replace(
-            "\"frontendDist\": \"../ui\"",
-            "\"frontendDist\": \"../ui\", \"devUrl\": \"http://localhost:1420\"",
+            "\"frontendDist\": \"../../ui\"",
+            "\"frontendDist\": \"../../ui\", \"devUrl\": \"http://localhost:1420\"",
         ),
         CONFIG.replace(
             "\"active\": true",
