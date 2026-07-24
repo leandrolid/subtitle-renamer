@@ -49,8 +49,8 @@ The first copy failure stops the batch and reports completed, failed, and pendin
 
 ## tests
 ```bash
-cargo test
-cargo test --test cli
+cargo test --workspace --locked
+cargo test -p subtitle-renamer-cli --test cli --locked
 ```
 
 ## build and run locally
@@ -73,56 +73,56 @@ cargo build --release
 
 ### Desktop app
 
-The desktop app is the separate Tauri package in `src-tauri`. If `cargo tauri` is missing, install the pinned CLI used by the package workflow:
+The desktop app is the Tauri package in `crates/desktop`. If `cargo tauri` is missing, install the pinned CLI used by the package workflow:
 ```bash
 cargo install tauri-cli --version 2.11.4 --locked
 ```
 
 Run the desktop quality gates from the repository root:
 ```bash
-cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
-cargo test --manifest-path src-tauri/Cargo.toml --locked
+cargo fmt --all -- --check
+cargo clippy -p subtitle-renamer-desktop --all-targets --all-features -- -D warnings
+cargo test -p subtitle-renamer-desktop --locked
 ```
 
 Launch the local app from source:
 ```bash
-cargo run --manifest-path src-tauri/Cargo.toml
+cargo run -p subtitle-renamer-desktop
 ```
 
-Build the debug app without bundles from `src-tauri`:
+Build the debug app without bundles from `crates/desktop`:
 ```bash
-cd src-tauri
+cd crates/desktop
 cargo tauri build --debug --no-bundle --ci --no-sign
 ```
 
-The normal debug executable is written to `src-tauri/target/debug/subtitle-renamer`. Run it directly from the repository root after the build:
+The normal debug executable is written to `target/debug/subtitle-renamer-desktop`. Run it directly from the repository root after the build:
 ```bash
-./src-tauri/target/debug/subtitle-renamer
+./target/debug/subtitle-renamer-desktop
 ```
 
-Build Linux packages from `src-tauri`:
+Build Linux packages from `crates/desktop`:
 ```bash
-cd src-tauri
+cd crates/desktop
 cargo tauri build --ci --no-sign --bundles deb,appimage
 ```
 
 The normal local package outputs are:
-- `src-tauri/target/release/bundle/deb/*.deb`
-- `src-tauri/target/release/bundle/appimage/*.AppImage`
+- `target/release/bundle/deb/*.deb`
+- `target/release/bundle/appimage/*.AppImage`
 
 Install and run the deb:
 ```bash
-sudo apt install ./src-tauri/target/release/bundle/deb/*.deb
-subtitle-renamer
+sudo apt install ./target/release/bundle/deb/*.deb
+subtitle-renamer-desktop
 ```
 
 Run the AppImage:
 ```bash
-chmod +x ./src-tauri/target/release/bundle/appimage/*.AppImage
-./src-tauri/target/release/bundle/appimage/*.AppImage
+chmod +x ./target/release/bundle/appimage/*.AppImage
+./target/release/bundle/appimage/*.AppImage
 ```
 
 Prior local Docker package proof cached deb and AppImage files under `.omo/docker-output/release/bundle/...`. That is ignored session output, not the durable default output path.
 
-GitHub workflow artifacts are separate from local builds. The package workflow uploads CI artifacts from `src-tauri/target/release/bundle/...` when it runs on tags or manual dispatch. Local commands here do not start a GitHub workflow, publish a release, push commits, or upload artifacts.
+GitHub workflow artifacts are separate from local builds. The package workflow uploads CI artifacts from `target/release/bundle/...` when it runs on tags or manual dispatch. Local commands here do not start a GitHub workflow, publish a release, push commits, or upload artifacts.
