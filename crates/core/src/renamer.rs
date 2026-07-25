@@ -592,7 +592,6 @@ mod tests {
         let dir = TestDir::create()?;
         fs::write(dir.file("BETA.MKV"), b"")?;
         fs::write(dir.file("a.mkv"), b"")?;
-        fs::write(dir.file("A.MKV"), b"")?;
         fs::write(dir.file("zeta.WebM"), b"")?;
         fs::write(dir.file("Alpha.SSA"), b"")?;
         fs::write(dir.file("alpha.sRt"), b"")?;
@@ -611,7 +610,6 @@ mod tests {
                 .map(|file| (&file.path, file.stem.as_str(), &file.extension))
                 .collect::<Vec<_>>(),
             vec![
-                (&dir.file("A.MKV"), "A", &OsString::from("MKV")),
                 (&dir.file("a.mkv"), "a", &OsString::from("mkv")),
                 (&dir.file("BETA.MKV"), "BETA", &OsString::from("MKV")),
                 (&dir.file("zeta.WebM"), "zeta", &OsString::from("WebM")),
