@@ -20,6 +20,8 @@
     shell: "[data-shell-root]",
     status: "[data-status-message]",
     folder: "[data-folder-label] bdi",
+    folderLabels: "[data-folder-label] bdi, [data-review-folder]",
+    reviewFolder: "[data-review-folder]",
     hostile: "[data-hostile-output]",
     emptyState: "[data-empty-state]",
     plannedArea: "[data-planned-area]",
@@ -29,6 +31,7 @@
     skippedCount: "[data-skipped-count]",
     skippedList: "[data-skipped-list]",
     confirmation: "[data-confirmation]",
+    confirmationCount: "[data-confirmation-count]",
     confirmationList: "[data-confirmation-list]",
     outcomes: "[data-outcomes]",
     completedGroup: "[data-outcome-group='completed']",
@@ -38,6 +41,7 @@
     pendingGroup: "[data-outcome-group='pending']",
     pendingList: "[data-pending-list]",
     selectButton: "[data-action='select-folder']",
+    selectButtons: "[data-action='select-folder']",
     rescanButton: "[data-action='rescan']",
     reviewButton: "[data-action='review-plan']",
     backButton: "[data-action='back']",
@@ -88,6 +92,12 @@
         selectedFolder: "Selected folder",
         sourceDirectory: "Source directory",
         selectFolder: "Select folder",
+        chooseTitle: "Select a media folder to scan",
+        chooseBody: "Choose the directory that contains your videos and loose subtitle files. Subtitle Renamer previews how each subtitle maps to a video before anything is copied.",
+        folderSurfaceBody: "Native folder picker, direct files only.",
+        scanFolder: "Scan folder",
+        videoFiles: "Video files",
+        subtitleFiles: "Subtitle files",
         noFolderSelected: "No folder selected.",
         folderHint: "Only direct files in the chosen folder will be considered.",
         supportedExtensions: "Supported videos: mkv, mp4, avi, mov, m4v, webm. Supported subtitles: ass, ssa, srt, vtt.",
@@ -99,7 +109,7 @@
         noPlanLoaded: "No plan loaded",
         confirm: "Confirm",
         copyPlannedSubtitles: "Copy planned subtitles?",
-        confirmBody: "This copies subtitle contents to matching video filenames. Source subtitles stay in place, and existing targets are not overwritten.",
+        confirmBody: "This will copy subtitle contents next to matching videos. It doesn't rename, move, or delete source subtitle files, and existing targets are not overwritten.",
         yesCopy: "Yes, copy",
         cancel: "Cancel",
         completed: "Completed",
@@ -110,6 +120,7 @@
         pendingAfterFailure: "Not copied after failure",
         sourceSubtitle: "Source subtitle",
         targetSubtitle: "Target filename",
+        targetOrReason: "Target / reason",
         statusColumn: "Status",
         skipReasonColumn: "Reason",
         rescan: "Rescan",
@@ -123,6 +134,9 @@
         languagePortugueseBrazil: "Português (Brasil)",
         progressLabel: "Workflow progress",
         statusRegionLabel: "Current status",
+        supportedFilesLabel: "Supported files",
+        planCountsLabel: "Plan counts",
+        mapsToLabel: "Maps to",
         copyReviewLabel: "Copy review",
         confirmCopyLabel: "Confirm copy",
         outcomesLabel: "Copy outcome groups",
@@ -135,11 +149,19 @@
         progressConfirmCopy: "Confirm copy",
         progressConfirmCopyDescription: "Write subtitles",
         ready: "Ready",
+        readyForCopy: "Ready for copy",
+        readyCountLabel: "ready",
+        skippedCountLabel: "skipped",
+        reviewTitle: "Review proposed mapping",
         continue: "Continue",
         back: "Back",
         reviewCurrentPlan: "Review current plan",
         startOver: "Start over",
         copySubtitles: "Copy subtitles",
+        copyNotMoveTitle: "Copy, not move",
+        copyNotMoveBody: "Subtitle contents are duplicated into matching video filenames.",
+        safeDefaultTitle: "Safe by default",
+        safeDefaultBody: "Source subtitle files stay in place and existing targets are not overwritten.",
         unknownSubtitle: "Unknown subtitle",
         unknownTarget: "Unknown target",
         skippedFallback: "Skipped",
@@ -222,6 +244,14 @@
           one: "Copied {count} file",
           other: "Copied {count} files",
         }),
+        copyButtonSubtitles: Object.freeze({
+          one: "Copy {count} subtitle",
+          other: "Copy {count} subtitles",
+        }),
+        confirmCopyCount: Object.freeze({
+          one: "{count} subtitle will be copied by content to its matching video filename.",
+          other: "{count} subtitles will be copied by content to their matching video filenames.",
+        }),
       }),
     }),
     "pt-BR": Object.freeze({
@@ -234,6 +264,12 @@
         selectedFolder: "Pasta selecionada",
         sourceDirectory: "Diretório de origem",
         selectFolder: "Selecionar pasta",
+        chooseTitle: "Selecione uma pasta de mídia para escanear",
+        chooseBody: "Escolha o diretório que contém seus vídeos e legendas soltas. Subtitle Renamer pré-visualiza como cada legenda corresponde a um vídeo antes de copiar qualquer coisa.",
+        folderSurfaceBody: "Seletor nativo de pastas, somente arquivos diretos.",
+        scanFolder: "Escanear pasta",
+        videoFiles: "Arquivos de vídeo",
+        subtitleFiles: "Arquivos de legenda",
         noFolderSelected: "Nenhuma pasta selecionada.",
         folderHint: "Somente arquivos diretos na pasta escolhida serão considerados.",
         supportedExtensions: "Vídeos suportados: mkv, mp4, avi, mov, m4v, webm. Legendas suportadas: ass, ssa, srt, vtt.",
@@ -245,7 +281,7 @@
         noPlanLoaded: "Nenhum plano carregado",
         confirm: "Confirmar",
         copyPlannedSubtitles: "Copiar legendas planejadas?",
-        confirmBody: "Isto copia o conteúdo das legendas para nomes de vídeo correspondentes. As legendas de origem permanecem no lugar, e destinos existentes não são sobrescritos.",
+        confirmBody: "Isto copia o conteúdo das legendas ao lado dos vídeos correspondentes. Não renomeia, move nem exclui as legendas de origem, e destinos existentes não são sobrescritos.",
         yesCopy: "Sim, copiar",
         cancel: "Cancelar",
         completed: "Concluídos",
@@ -256,6 +292,7 @@
         pendingAfterFailure: "Não copiados após a falha",
         sourceSubtitle: "Legenda de origem",
         targetSubtitle: "Nome de destino",
+        targetOrReason: "Destino / motivo",
         statusColumn: "Status",
         skipReasonColumn: "Motivo",
         rescan: "Reescanear",
@@ -269,6 +306,9 @@
         languagePortugueseBrazil: "Português (Brasil)",
         progressLabel: "Progresso do fluxo",
         statusRegionLabel: "Status atual",
+        supportedFilesLabel: "Arquivos suportados",
+        planCountsLabel: "Contagens do plano",
+        mapsToLabel: "Mapeia para",
         copyReviewLabel: "Revisão das cópias",
         confirmCopyLabel: "Confirmar cópia",
         outcomesLabel: "Grupos de resultado da cópia",
@@ -281,11 +321,19 @@
         progressConfirmCopy: "Confirmar cópia",
         progressConfirmCopyDescription: "Gravar legendas",
         ready: "Pronto",
+        readyForCopy: "Pronto para copiar",
+        readyCountLabel: "prontas",
+        skippedCountLabel: "ignoradas",
+        reviewTitle: "Revisar mapeamento proposto",
         continue: "Continuar",
         back: "Voltar",
         reviewCurrentPlan: "Revisar plano atual",
         startOver: "Começar de novo",
         copySubtitles: "Copiar legendas",
+        copyNotMoveTitle: "Copiar, não mover",
+        copyNotMoveBody: "O conteúdo das legendas é duplicado com nomes de vídeo correspondentes.",
+        safeDefaultTitle: "Seguro por padrão",
+        safeDefaultBody: "As legendas de origem permanecem no lugar e destinos existentes não são sobrescritos.",
         unknownSubtitle: "Legenda desconhecida",
         unknownTarget: "Destino desconhecido",
         skippedFallback: "Ignorado",
@@ -368,6 +416,14 @@
           one: "Copiou {count} arquivo",
           other: "Copiou {count} arquivos",
         }),
+        copyButtonSubtitles: Object.freeze({
+          one: "Copiar {count} legenda",
+          other: "Copiar {count} legendas",
+        }),
+        confirmCopyCount: Object.freeze({
+          one: "{count} legenda será copiada pelo conteúdo para o nome de vídeo correspondente.",
+          other: "{count} legendas serão copiadas pelo conteúdo para os nomes de vídeo correspondentes.",
+        }),
       }),
     }),
   });
@@ -393,8 +449,13 @@
     ["[data-l10n-key='progressConfirmCopy']", "progressConfirmCopy"],
     ["[data-l10n-key='progressConfirmCopyDescription']", "progressConfirmCopyDescription"],
     ["[data-selected-folder-area] .eyebrow", "selectedFolder"],
-    ["#folder-title", "sourceDirectory"],
-    ["[data-action='select-folder']", "selectFolder"],
+    ["#folder-title", "chooseTitle"],
+    ["[data-workflow-region='choose-folder'] .step-intro p:not(.eyebrow)", "chooseBody"],
+    ["[data-select-folder-label]", "selectFolder"],
+    ["[data-l10n-key='folderSurfaceBody']", "folderSurfaceBody"],
+    ["[data-action='select-folder'][data-l10n-key='scanFolder']", "scanFolder"],
+    ["[data-l10n-key='videoFiles']", "videoFiles"],
+    ["[data-l10n-key='subtitleFiles']", "subtitleFiles"],
     ["[data-l10n-key='folderHint']", "folderHint"],
     ["[data-l10n-key='supportedExtensions']", "supportedExtensions"],
     [".status-line strong", "statusLabel"],
@@ -402,14 +463,22 @@
     ["[data-planned-area] .eyebrow", "plan"],
     ["[data-l10n-key='sourceSubtitle']", "sourceSubtitle"],
     ["[data-l10n-key='targetSubtitle']", "targetSubtitle"],
+    ["[data-l10n-key='targetOrReason']", "targetOrReason"],
     ["[data-l10n-key='statusColumn']", "statusColumn"],
     ["[data-l10n-key='skipReasonColumn']", "skipReasonColumn"],
     ["#skipped-title", "skippedFiles"],
     ["[data-skipped-area] .eyebrow", "skipped"],
     ["[data-empty-state] > .eyebrow", "noPlanLoaded"],
+    ["#review-title", "reviewTitle"],
+    ["[data-l10n-key='readyCountLabel']", "readyCountLabel"],
+    ["[data-l10n-key='skippedCountLabel']", "skippedCountLabel"],
     ["#confirm-title", "copyPlannedSubtitles"],
     ["[data-confirmation] .eyebrow", "confirm"],
-    ["[data-confirmation] > p:not(.eyebrow)", "confirmBody"],
+    ["[data-confirmation] .step-intro p[data-l10n-key='confirmBody']", "confirmBody"],
+    ["[data-l10n-key='copyNotMoveTitle']", "copyNotMoveTitle"],
+    ["[data-l10n-key='copyNotMoveBody']", "copyNotMoveBody"],
+    ["[data-l10n-key='safeDefaultTitle']", "safeDefaultTitle"],
+    ["[data-l10n-key='safeDefaultBody']", "safeDefaultBody"],
     ["[data-action='confirm-copy']", "yesCopy"],
     ["[data-action='cancel-copy']", "startOver"],
     ["[data-outcome-group='completed'] .eyebrow", "completed"],
@@ -430,6 +499,9 @@
     ["[data-l10n-aria-label='language']", "language"],
     ["[data-l10n-aria-label='progressLabel']", "progressLabel"],
     ["[data-l10n-aria-label='statusRegionLabel']", "statusRegionLabel"],
+    ["[data-l10n-aria-label='supportedFilesLabel']", "supportedFilesLabel"],
+    ["[data-l10n-aria-label='planCountsLabel']", "planCountsLabel"],
+    ["[data-l10n-aria-label='mapsToLabel']", "mapsToLabel"],
     ["[data-l10n-aria-label='copyReviewLabel']", "copyReviewLabel"],
     ["[data-l10n-aria-label='confirmCopyLabel']", "confirmCopyLabel"],
     ["[data-l10n-aria-label='outcomesLabel']", "outcomesLabel"],
@@ -607,7 +679,7 @@
     }
     applyStaticText();
     if (!state.selectedDirectoryLabel) {
-      setPlainText(ui.folder, text("noFolderSelected"));
+      setFolderLabels(text("noFolderSelected"));
     }
     renderEmptyState(state.emptyState.titleKey, state.emptyState.bodyKey);
     renderStatus();
@@ -725,6 +797,8 @@
       shell: requiredElement(selectors.shell),
       status: requiredElement(selectors.status),
       folder: requiredElement(selectors.folder),
+      folderLabels: Array.from(document.querySelectorAll(selectors.folderLabels)),
+      reviewFolder: requiredElement(selectors.reviewFolder),
       hostile: requiredElement(selectors.hostile),
       emptyState: requiredElement(selectors.emptyState),
       plannedArea: requiredElement(selectors.plannedArea),
@@ -734,6 +808,7 @@
       skippedCount: requiredElement(selectors.skippedCount),
       skippedList: requiredElement(selectors.skippedList),
       confirmation: requiredElement(selectors.confirmation),
+      confirmationCount: requiredElement(selectors.confirmationCount),
       confirmationList: requiredElement(selectors.confirmationList),
       outcomes: requiredElement(selectors.outcomes),
       completedGroup: requiredElement(selectors.completedGroup),
@@ -743,6 +818,7 @@
       pendingGroup: requiredElement(selectors.pendingGroup),
       pendingList: requiredElement(selectors.pendingList),
       selectButton: requiredElement(selectors.selectButton),
+      selectButtons: Array.from(document.querySelectorAll(selectors.selectButtons)),
       rescanButton: requiredElement(selectors.rescanButton),
       reviewButton: requiredElement(selectors.reviewButton),
       backButton: requiredElement(selectors.backButton),
@@ -806,6 +882,12 @@
     element.textContent = String(value ?? "");
   }
 
+  function setFolderLabels(value) {
+    for (const label of ui.folderLabels) {
+      setPlainText(label, value);
+    }
+  }
+
   function renderStatus() {
     let message;
     if (state.status.key === "statusPlanReady") {
@@ -838,7 +920,9 @@
   }
 
   function setButtons(disabled) {
-    ui.selectButton.disabled = disabled.select;
+    for (const button of ui.selectButtons) {
+      button.disabled = disabled.select;
+    }
     ui.rescanButton.disabled = disabled.rescan;
     ui.reviewButton.disabled = disabled.review;
     ui.backButton.disabled = disabled.back;
@@ -861,6 +945,7 @@
     clearList(ui.confirmationList);
     setPlainText(ui.plannedCount, "0");
     setPlainText(ui.skippedCount, "0");
+    setPlainText(ui.confirmationCount, "");
   }
 
   function safeCode(value) {
@@ -906,26 +991,35 @@
   function appendReadyCopyRow(list, row) {
     const item = document.createElement("tr");
     appendBdiCell(item, row?.sourceLabel ?? text("unknownSubtitle"));
+    appendArrowCell(item);
     appendBdiCell(item, row?.targetLabel ?? text("unknownTarget"));
-    appendStatusCell(item, text("ready"), "success");
+    appendStatusCell(item, text("readyForCopy"), "success");
     list.append(item);
   }
 
   function appendConfirmationRow(list, row) {
     const item = document.createElement("li");
-    const prefix = document.createElement("strong");
     const target = document.createElement("bdi");
-    setPlainText(prefix, text("confirmationTargetIntro"));
     setPlainText(target, row?.targetLabel ?? text("unknownTarget"));
-    item.append(prefix, target);
+    item.append(target);
     list.append(item);
   }
 
   function appendSkipRow(list, row) {
     const item = document.createElement("tr");
     appendBdiCell(item, row?.sourceLabel ?? row?.label ?? text("unknownSubtitle"));
-    appendStatusCell(item, humanSkipReason(row?.reasonCode ?? row?.reason), "warning");
+    appendArrowCell(item);
+    appendBdiCell(item, humanSkipReason(row?.reasonCode ?? row?.reason));
+    appendStatusCell(item, text("skippedFallback"), "warning");
     list.append(item);
+  }
+
+  function appendArrowCell(row) {
+    const cell = document.createElement("td");
+    cell.className = "mapping-table__arrow-cell";
+    cell.setAttribute("aria-hidden", "true");
+    setPlainText(cell, "→");
+    row.append(cell);
   }
 
   function appendBdiCell(row, value) {
@@ -1000,6 +1094,7 @@
 
   function updateProgress() {
     ui.shell.dataset.phase = phaseForStepCss();
+    ui.shell.dataset.visibleStep = state.visibleStep;
     for (const step of ui.progressSteps) {
       if (step.dataset.progressStep === state.visibleStep) {
         step.setAttribute("aria-current", "step");
@@ -1027,7 +1122,15 @@
   }
 
   function updateActionLabels() {
-    setPlainText(ui.copyButton, text(state.visibleStep === visibleSteps.REVIEW ? "continue" : "copySubtitles"));
+    if (state.visibleStep === visibleSteps.REVIEW) {
+      setPlainText(ui.copyButton, text("continue"));
+      return;
+    }
+    if (state.visibleStep === visibleSteps.CONFIRM && state.currentPlan?.canExecute) {
+      setPlainText(ui.copyButton, pluralText("copyButtonSubtitles", snapshotCopies().length));
+      return;
+    }
+    setPlainText(ui.copyButton, text("copySubtitles"));
   }
 
   function updateControls() {
@@ -1036,13 +1139,14 @@
     const hasPlan = Boolean(state.currentPlan?.planId);
     const canExecute = Boolean(state.currentPlan?.planId && state.currentPlan.canExecute);
     const hasOutcome = Boolean(state.currentOutcome);
+    ui.shell.dataset.hasPlan = String(hasPlan);
     setButtons({
       select: busy,
       rescan: busy || !hasDirectory,
       review: busy || !hasPlan || state.visibleStep === visibleSteps.REVIEW,
-      back: busy || state.visibleStep === visibleSteps.CHOOSE,
+      back: busy || state.visibleStep === visibleSteps.CHOOSE || hasOutcome,
       startOver: busy || (!hasPlan && !hasOutcome),
-      copy: busy || state.visibleStep !== visibleSteps.REVIEW || !canExecute,
+      copy: busy || hasOutcome || (state.visibleStep !== visibleSteps.REVIEW && state.visibleStep !== visibleSteps.CONFIRM) || !canExecute,
       confirm: busy || state.visibleStep !== visibleSteps.CONFIRM || hasOutcome || !canExecute,
       cancel: busy || (!hasPlan && !hasOutcome),
     });
@@ -1052,6 +1156,7 @@
   function renderReviewStep() {
     const copies = snapshotCopies();
     const skips = snapshotSkips();
+    const rowCount = copies.length + skips.length;
     clearDynamicContent();
     for (const row of copies) {
       appendReadyCopyRow(ui.plannedList, row);
@@ -1061,12 +1166,12 @@
     }
     setPlainText(ui.plannedCount, copies.length);
     setPlainText(ui.skippedCount, skips.length);
-    setHidden(ui.plannedArea, copies.length === 0);
-    setHidden(ui.skippedArea, skips.length === 0);
+    setHidden(ui.plannedArea, rowCount === 0);
+    setHidden(ui.skippedArea, true);
     setHidden(ui.confirmation, true);
     setHidden(ui.outcomes, true);
-    setHidden(ui.emptyState, copies.length > 0);
-    if (copies.length === 0) {
+    setHidden(ui.emptyState, rowCount > 0);
+    if (rowCount === 0) {
       renderEmptyState("emptyNoFilesTitle", "emptyNoFilesBody");
     }
   }
@@ -1082,7 +1187,9 @@
       renderOutcomeLists();
       return;
     }
-    for (const row of snapshotCopies()) {
+    const copies = snapshotCopies();
+    setPlainText(ui.confirmationCount, pluralText("confirmCopyCount", copies.length));
+    for (const row of copies) {
       appendConfirmationRow(ui.confirmationList, row);
     }
     setHidden(ui.confirmation, false);
@@ -1128,7 +1235,7 @@
     state.currentOutcome = null;
     state.selectedDirectoryLabel = String(snapshot?.directoryLabel ?? "Selected folder");
 
-    setPlainText(ui.folder, state.selectedDirectoryLabel);
+    setFolderLabels(state.selectedDirectoryLabel);
     state.visibleStep = visibleSteps.REVIEW;
 
     if (state.currentPlan.canExecute) {
@@ -1190,7 +1297,7 @@
     }
 
     if (!state.selectedDirectoryLabel) {
-      setPlainText(ui.folder, text("noFolderSelected"));
+      setFolderLabels(text("noFolderSelected"));
       hideReviewAndOutcomes();
       clearDynamicContent();
       setHidden(ui.emptyState, false);
@@ -1218,9 +1325,9 @@
     if (phase === phases.PLAN_READY || phase === phases.PLAN_EMPTY) {
       focusElement(state.currentPlan?.canExecute ? ui.copyButton : ui.rescanButton);
     } else if (phase === phases.COMPLETED || phase === phases.PARTIAL_FAILURE || phase === phases.EXECUTION_FAILURE) {
-      focusElement(ui.rescanButton.disabled ? ui.selectButton : ui.rescanButton);
+      focusElement(ui.startOverButton.disabled ? ui.selectButton : ui.startOverButton);
     } else if (phase === phases.CONFIRMING) {
-      focusElement(ui.confirmButton);
+      focusElement(ui.copyButton);
     } else if (phase === phases.PLANNING_FAILURE) {
       focusElement(ui.selectButton);
     }
@@ -1578,9 +1685,11 @@
   }
 
   function bindEvents() {
-    ui.selectButton.addEventListener("click", () => {
-      void beginPlanning("select_and_plan");
-    });
+    for (const button of ui.selectButtons) {
+      button.addEventListener("click", () => {
+        void beginPlanning("select_and_plan");
+      });
+    }
     ui.rescanButton.addEventListener("click", () => {
       void beginPlanning("rescan");
     });
@@ -1603,7 +1712,13 @@
     ui.startOverButton.addEventListener("click", () => {
       void discardCurrentPlan();
     });
-    ui.copyButton.addEventListener("click", beginConfirmation);
+    ui.copyButton.addEventListener("click", () => {
+      if (state.visibleStep === visibleSteps.CONFIRM) {
+        void executeCurrentPlan();
+        return;
+      }
+      beginConfirmation();
+    });
     ui.cancelButton.addEventListener("click", () => {
       void discardCurrentPlan();
     });

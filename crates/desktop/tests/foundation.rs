@@ -250,6 +250,149 @@ fn renderer_contract_covers_final_review_accessibility_and_safety_copy() {
 }
 
 #[test]
+fn shell_plan_state_exposes_data_has_plan_from_current_plan() {
+    // Given: the checked-in shell controller.
+    let app = APP_JS;
+
+    // When: the plan state wiring is inspected statically.
+    // Then: currentPlan drives a shell data-has-plan marker.
+    assert!(app.contains("state.currentPlan"));
+    assert!(app.contains("dataset.hasPlan"));
+}
+
+#[test]
+fn shell_preserves_review_and_restart_actions_when_a_plan_exists() {
+    // Given: the checked-in shell HTML and stylesheet.
+    let html = INDEX_HTML;
+    let css = STYLES_CSS;
+
+    // When: the choose-step preserved-plan surface is inspected statically.
+    // Then: review-plan and start-over stay visible when a plan exists.
+    assert!(html.contains("data-action=\"review-plan\""));
+    assert!(html.contains("data-action=\"start-over\""));
+    assert!(css.contains(
+        ".shell[data-visible-step=\"choose-folder\"][data-has-plan=\"true\"] .action-bar"
+    ));
+    assert!(css.contains(".shell[data-visible-step=\"choose-folder\"][data-has-plan=\"true\"] [data-action=\"review-plan\"]"));
+    assert!(css.contains(".shell[data-visible-step=\"choose-folder\"][data-has-plan=\"true\"] [data-action=\"start-over\"]"));
+}
+
+#[test]
+fn shell_restores_status_visibility_only_for_the_default_app_viewport() {
+    // Given: the checked-in shell stylesheet.
+    let css = STYLES_CSS;
+
+    // When: the status visibility contract is inspected statically.
+    // Then: the wide reference view may stay hidden, while the default app viewport regains visibility.
+    assert!(css.contains(".status-line {"));
+    assert!(css.contains("position: absolute;"));
+    assert!(css.contains("clip-path: inset(50%);"));
+    assert!(css.contains("white-space: nowrap;"));
+    assert!(css.contains("@media (max-width: 900px)") || css.contains("@media (width <= 900px)"));
+    assert!(css.contains("position: static;"));
+    assert!(css.contains("clip-path: none;"));
+}
+
+#[test]
+fn shell_aria_labels_move_supported_files_plan_counts_and_maps_to_into_l10n_bindings() {
+    // Given: the checked-in shell HTML and renderer script.
+    let html = INDEX_HTML;
+    let app = APP_JS;
+
+    // When: the accessible names are inspected statically.
+    // Then: supported files, plan counts, and maps to use localized aria-label bindings.
+    for expected in [
+        "Supported files",
+        "Plan counts",
+        "Maps to",
+        "supportedFilesLabel",
+        "planCountsLabel",
+        "mapsToLabel",
+    ] {
+        assert!(app.contains(expected), "{expected}");
+    }
+    for expected in [
+        "data-l10n-aria-label=\"supportedFilesLabel\"",
+        "data-l10n-aria-label=\"planCountsLabel\"",
+        "data-l10n-aria-label=\"mapsToLabel\"",
+    ] {
+        assert!(html.contains(expected), "{expected}");
+    }
+}
+
+#[test]
+fn shell_layout_marks_visible_step_and_dual_select_folder_actions() {
+    // Given: the checked-in shell HTML and app controller.
+    let html = INDEX_HTML;
+    let app = APP_JS;
+
+    // When: the three-step shell wiring is inspected statically.
+    // Then: the shell exposes the visible-step marker and two select-folder actions.
+    assert!(html.contains("data-visible-step"));
+    assert!(app.contains("dataset.visibleStep"));
+    assert_eq!(html.matches("data-action=\"select-folder\"").count(), 2);
+    assert!(app.contains("[data-action='select-folder']"));
+}
+
+#[test]
+fn shell_layout_locks_geometry_copy_safety_and_real_content_contracts() {
+    // Given: the checked-in shell HTML, controller, and CSS.
+    let html = INDEX_HTML;
+    let app = APP_JS;
+    let css = STYLES_CSS;
+
+    // When: the screenshot-faithful layout contract is inspected statically.
+    // Then: the geometry, extension lists, and copy safety stay locked.
+    for expected in ["50px", "68px", "61px"] {
+        assert!(css.contains(expected), "{expected}");
+    }
+    for expected in ["672px", "896px"] {
+        assert!(css.contains(expected), "{expected}");
+    }
+    for expected in [
+        "mkv, mp4, avi, mov, m4v, webm",
+        "ass, ssa, srt, vtt",
+        "copy subtitle contents",
+        "existing targets are not overwritten",
+        "doesn't rename, move, or delete source subtitle files",
+    ] {
+        assert!(
+            html.contains(expected) || app.contains(expected),
+            "{expected}"
+        );
+    }
+}
+
+#[test]
+fn shell_layout_excludes_reference_only_metadata_and_fake_review_states() {
+    // Given: the checked-in shell HTML, controller, and CSS.
+    let html = INDEX_HTML;
+    let app = APP_JS;
+    let css = STYLES_CSS;
+
+    // When: the reference-only screenshot details are inspected statically.
+    // Then: the shell does not leak SubMatch branding, fake metadata, or unsupported review states.
+    for forbidden in [
+        "SubMatch",
+        "drag/drop",
+        "drag and drop",
+        "last-used",
+        "last used",
+        "confidence",
+        "% match",
+        "file size",
+        "sample path",
+        "fake sample",
+        "unsupported review",
+        "unsupported-review",
+    ] {
+        assert!(!html.contains(forbidden), "{forbidden}");
+        assert!(!app.contains(forbidden), "{forbidden}");
+        assert!(!css.contains(forbidden), "{forbidden}");
+    }
+}
+
+#[test]
 fn design_keeps_layout_screenshots_as_read_only_reference_guidance() {
     // Given: the design system carries renderer constraints.
     // When: reference image guidance is inspected.
