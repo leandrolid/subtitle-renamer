@@ -1,21 +1,26 @@
 :root {
   color-scheme: light;
   --color-canvas: #f7f6f2;
+  --color-app-bar: #ffffff;
   --color-surface: #ffffff;
+  --color-surface-raised: #fbfaf7;
   --color-surface-muted: #f0eee8;
   --color-text: #25231f;
   --color-muted: #69645c;
+  --color-on-action: #ffffff;
   --color-border: #d8d3c8;
   --color-border-strong: #aaa397;
-  --color-action: #2f4d3a;
-  --color-action-hover: #243c2d;
+  --color-action: #1f66d1;
+  --color-action-hover: #174fa8;
   --color-warning: #805b15;
   --color-error: #8b2f24;
   --color-success: #2f6842;
+  --color-neutral-status: #6f6a61;
   --font-ui: ui-sans-serif, "Aptos", "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace;
   --type-h1: 650 1.5rem / 1.2 var(--font-ui);
-  --type-h2: 650 1rem / 1.35 var(--font-ui);
+  --type-h2: 650 1.125rem / 1.35 var(--font-ui);
+  --type-h3: 650 1rem / 1.35 var(--font-ui);
   --type-body: 400 0.9375rem / 1.55 var(--font-ui);
   --type-small: 400 0.8125rem / 1.45 var(--font-ui);
   --type-label: 700 0.75rem / 1.35 var(--font-ui);
@@ -26,11 +31,39 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
-  --shell-min: 320px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --radius-1: 4px;
+  --radius-2: 8px;
+  --radius-3: 12px;
+  --shell-min: 720px;
+  --shell-default: 900px;
   --shell-max: 1120px;
+  --content-readable: 672px;
+  --content-review: 896px;
   --motion-fast: 120ms ease-out;
   --motion-standard: 180ms ease-in-out;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-action) 24%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-action) 28%, transparent);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #0c0f14;
+  --color-app-bar: #121722;
+  --color-surface: #161b26;
+  --color-surface-raised: #1d2430;
+  --color-surface-muted: #242b36;
+  --color-text: #f4f7fb;
+  --color-muted: #a8b0bd;
+  --color-on-action: #ffffff;
+  --color-border: #303846;
+  --color-border-strong: #465061;
+  --color-action: #4c8dff;
+  --color-action-hover: #6aa2ff;
+  --color-warning: #d9a441;
+  --color-error: #ff7b72;
+  --color-success: #60c083;
+  --color-neutral-status: #8f98a6;
 }
 
 * {
@@ -47,6 +80,7 @@ html {
 body {
   margin: 0;
   min-width: var(--shell-min);
+  background: var(--color-canvas);
 }
 
 button,
@@ -61,7 +95,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-action);
+  outline: 1px solid var(--color-action);
   outline-offset: var(--space-1);
   box-shadow: var(--focus-ring);
 }
@@ -81,12 +115,14 @@ button {
 }
 
 .shell__header,
+.progress-tracker,
 .panel,
 .status-line,
 .empty-state,
 .action-bar {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-3);
 }
 
 .shell__header {
@@ -94,23 +130,268 @@ button {
   gap: var(--space-4);
   align-items: flex-start;
   padding: var(--space-5);
+  background: var(--color-app-bar);
 }
 
 .shell__icon {
   flex: 0 0 auto;
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+}
+
+.settings-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.settings-menu ul {
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+}
+
+.settings-menu [role="menu"] {
+  position: absolute;
+  z-index: 1;
+  min-width: calc(var(--space-12) * 4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-3);
+}
+
+#settings-menu {
+  inset-block-start: calc(100% + var(--space-2));
+  inset-inline-end: 0;
+}
+
+.settings-menu li {
+  position: relative;
+}
+
+.settings-menu [role="menu"] [role="menu"] {
+  inset-block-start: 0;
+  inset-inline-end: calc(100% + var(--space-2));
+}
+
+.settings-menu [role^="menuitem"] {
+  width: 100%;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-1);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--type-small);
+  text-align: start;
+  cursor: pointer;
+}
+
+.settings-menu [role^="menuitem"]:hover,
+.settings-menu [role^="menuitem"]:focus-visible {
+  background: var(--color-surface-raised);
+}
+
+.settings-menu [role="menuitemradio"][aria-checked="true"]::before {
+  width: var(--space-2);
+  height: var(--space-2);
+  background: var(--color-action);
+  border-radius: 50%;
+  content: "";
 }
 
 .shell__title-group,
+.progress-tracker,
 .panel,
 .empty-state {
   min-width: 0;
 }
 
+.progress-tracker {
+  padding: var(--space-4);
+  background: var(--color-app-bar);
+}
+
+.progress-tracker__list {
+  width: min(100%, var(--content-review));
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--space-8) minmax(0, 1fr) var(--space-8) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  list-style: none;
+}
+
+.progress-step {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+}
+
+.progress-step__marker {
+  position: relative;
+  flex: 0 0 var(--space-8);
+  width: var(--space-8);
+  height: var(--space-8);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  color: var(--color-neutral-status);
+  font: var(--type-label);
+}
+
+.progress-step__copy {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.progress-step__label,
+.progress-step__description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-step__label {
+  color: var(--color-muted);
+  font: var(--type-h3);
+}
+
+.progress-step__description {
+  color: var(--color-muted);
+  font: var(--type-small);
+}
+
+.progress-tracker__connector {
+  min-width: 0;
+  height: 1px;
+  background: var(--color-border-strong);
+}
+
+.progress-step[aria-current="step"] .progress-step__marker,
+.shell[data-phase="idle"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="selecting"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="scanning"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="plan-empty"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="planning-failure"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="plan-ready"] .progress-step--review .progress-step__marker,
+.shell[data-phase="confirming"] .progress-step--confirm .progress-step__marker,
+.shell[data-phase="executing"] .progress-step--confirm .progress-step__marker,
+.shell[data-phase="completed"] .progress-step--confirm .progress-step__marker,
+.shell[data-phase="declined"] .progress-step--confirm .progress-step__marker,
+.shell[data-phase="partial-failure"] .progress-step--confirm .progress-step__marker,
+.shell[data-phase="execution-failure"] .progress-step--confirm .progress-step__marker {
+  border-color: var(--color-action);
+  color: var(--color-action);
+}
+
+.progress-step[aria-current="step"] .progress-step__label,
+.shell[data-phase="idle"] .progress-step--choose .progress-step__label,
+.shell[data-phase="selecting"] .progress-step--choose .progress-step__label,
+.shell[data-phase="scanning"] .progress-step--choose .progress-step__label,
+.shell[data-phase="plan-empty"] .progress-step--choose .progress-step__label,
+.shell[data-phase="planning-failure"] .progress-step--choose .progress-step__label,
+.shell[data-phase="plan-ready"] .progress-step--review .progress-step__label,
+.shell[data-phase="confirming"] .progress-step--confirm .progress-step__label,
+.shell[data-phase="executing"] .progress-step--confirm .progress-step__label,
+.shell[data-phase="completed"] .progress-step--confirm .progress-step__label,
+.shell[data-phase="declined"] .progress-step--confirm .progress-step__label,
+.shell[data-phase="partial-failure"] .progress-step--confirm .progress-step__label,
+.shell[data-phase="execution-failure"] .progress-step--confirm .progress-step__label {
+  color: var(--color-text);
+}
+
+.shell[data-phase="plan-ready"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="confirming"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="confirming"] .progress-step--review .progress-step__marker,
+.shell[data-phase="executing"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="executing"] .progress-step--review .progress-step__marker,
+.shell[data-phase="completed"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="completed"] .progress-step--review .progress-step__marker,
+.shell[data-phase="declined"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="declined"] .progress-step--review .progress-step__marker,
+.shell[data-phase="partial-failure"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="partial-failure"] .progress-step--review .progress-step__marker,
+.shell[data-phase="execution-failure"] .progress-step--choose .progress-step__marker,
+.shell[data-phase="execution-failure"] .progress-step--review .progress-step__marker {
+  background: var(--color-action);
+  border-color: var(--color-action);
+  color: var(--color-on-action);
+}
+
+.shell[data-phase="plan-ready"] .progress-step--choose .progress-step__number,
+.shell[data-phase="confirming"] .progress-step--choose .progress-step__number,
+.shell[data-phase="confirming"] .progress-step--review .progress-step__number,
+.shell[data-phase="executing"] .progress-step--choose .progress-step__number,
+.shell[data-phase="executing"] .progress-step--review .progress-step__number,
+.shell[data-phase="completed"] .progress-step--choose .progress-step__number,
+.shell[data-phase="completed"] .progress-step--review .progress-step__number,
+.shell[data-phase="declined"] .progress-step--choose .progress-step__number,
+.shell[data-phase="declined"] .progress-step--review .progress-step__number,
+.shell[data-phase="partial-failure"] .progress-step--choose .progress-step__number,
+.shell[data-phase="partial-failure"] .progress-step--review .progress-step__number,
+.shell[data-phase="execution-failure"] .progress-step--choose .progress-step__number,
+.shell[data-phase="execution-failure"] .progress-step--review .progress-step__number {
+  opacity: 0;
+}
+
+.shell[data-phase="plan-ready"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="confirming"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="confirming"] .progress-step--review .progress-step__marker::after,
+.shell[data-phase="executing"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="executing"] .progress-step--review .progress-step__marker::after,
+.shell[data-phase="completed"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="completed"] .progress-step--review .progress-step__marker::after,
+.shell[data-phase="declined"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="declined"] .progress-step--review .progress-step__marker::after,
+.shell[data-phase="partial-failure"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="partial-failure"] .progress-step--review .progress-step__marker::after,
+.shell[data-phase="execution-failure"] .progress-step--choose .progress-step__marker::after,
+.shell[data-phase="execution-failure"] .progress-step--review .progress-step__marker::after {
+  position: absolute;
+  width: var(--space-3);
+  height: var(--space-2);
+  border: solid var(--color-on-action);
+  border-width: 0 0 2px 2px;
+  content: "";
+  transform: rotate(-45deg) translateY(calc(var(--space-1) * -1));
+}
+
+.shell[data-phase="plan-ready"] [data-progress-connector="choose-review"],
+.shell[data-phase="confirming"] [data-progress-connector],
+.shell[data-phase="executing"] [data-progress-connector],
+.shell[data-phase="completed"] [data-progress-connector],
+.shell[data-phase="declined"] [data-progress-connector],
+.shell[data-phase="partial-failure"] [data-progress-connector],
+.shell[data-phase="execution-failure"] [data-progress-connector] {
+  background: var(--color-action);
+}
+
 .shell__main {
   display: grid;
   gap: var(--space-4);
+  justify-items: center;
   padding-bottom: calc(var(--space-8) * 2 + var(--space-4));
+}
+
+.selected-folder,
+.status-line,
+.empty-state,
+[data-workflow-region="confirm-copy"] {
+  width: min(100%, var(--content-readable));
+}
+
+.work-grid,
+.outcomes {
+  width: min(100%, var(--content-review));
 }
 
 .panel,
@@ -133,15 +414,15 @@ button {
 
 .status-line {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
 }
 
 .action-bar {
-  position: sticky;
-  bottom: 0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -197,6 +478,11 @@ h2 {
   unicode-bidi: plaintext;
 }
 
+bdi {
+  overflow-wrap: anywhere;
+  unicode-bidi: isolate;
+}
+
 .probe-output:empty {
   display: none;
 }
@@ -207,9 +493,10 @@ h2 {
 }
 
 .button {
-  min-height: calc(var(--space-8) + var(--space-2));
+  min-height: var(--space-10);
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-2);
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
@@ -233,7 +520,7 @@ h2 {
 .button--primary {
   background: var(--color-action);
   border-color: var(--color-action);
-  color: var(--color-surface);
+  color: var(--color-on-action);
 }
 
 .button--primary:hover:not(:disabled) {
@@ -252,12 +539,91 @@ h2 {
 
 .file-list {
   margin: var(--space-4) 0 0;
-  padding-inline-start: var(--space-5);
+  padding: 0;
   font: var(--type-small);
+  list-style: none;
 }
 
 .file-list li + li {
   margin-top: var(--space-2);
+}
+
+.file-list li {
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.file-list strong {
+  color: var(--color-warning);
+}
+
+.mapping-table {
+  width: 100%;
+  margin-top: var(--space-4);
+  border-collapse: separate;
+  border-spacing: 0 var(--space-2);
+  font: var(--type-small);
+}
+
+.mapping-table th {
+  padding: 0 var(--space-3) var(--space-1);
+  color: var(--color-muted);
+  font: var(--type-label);
+  letter-spacing: 0.08em;
+  text-align: start;
+  text-transform: uppercase;
+}
+
+.mapping-table td {
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  border-block: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.mapping-table td:first-child {
+  border-inline-start: 1px solid var(--color-border);
+  border-start-start-radius: var(--radius-2);
+  border-end-start-radius: var(--radius-2);
+}
+
+.mapping-table td:last-child {
+  border-inline-end: 1px solid var(--color-border);
+  border-start-end-radius: var(--radius-2);
+  border-end-end-radius: var(--radius-2);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-1);
+  font: var(--type-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-pill--success {
+  color: var(--color-success);
+}
+
+.status-pill--warning {
+  color: var(--color-warning);
+}
+
+.status-pill--error {
+  color: var(--color-error);
+}
+
+.status-pill--neutral {
+  color: var(--color-neutral-status);
 }
 
 .inline-actions {
@@ -274,12 +640,56 @@ h2 {
   }
 }
 
+@media (width <= 720px) {
+  .shell {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  .shell__header,
+  .panel__heading {
+    flex-wrap: wrap;
+  }
+
+  .button {
+    max-width: 100%;
+  }
+
+  .progress-tracker {
+    padding: var(--space-3);
+  }
+
+  .progress-tracker__list {
+    grid-template-columns: minmax(0, 1fr) var(--space-4) minmax(0, 1fr) var(--space-4) minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .progress-step {
+    gap: var(--space-1);
+  }
+
+  .progress-step__marker {
+    flex-basis: var(--space-6);
+    width: var(--space-6);
+    height: var(--space-6);
+  }
+
+  .progress-step__label {
+    font: var(--type-small);
+  }
+
+  .progress-step__description {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 1ms !important;
-    animation-duration: 1ms !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    scroll-behavior: auto !important;
   }
 
   .button:active:not(:disabled) {

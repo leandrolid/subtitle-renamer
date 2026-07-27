@@ -14,97 +14,169 @@
       <header class="shell__header" role="banner">
         <img class="shell__icon" src="./app-icon.svg" width="40" height="40" alt="">
         <div class="shell__title-group">
-          <p class="eyebrow">Local copy planner</p>
-          <h1>Subtitle Renamer</h1>
-          <p class="lede">Choose a folder, review planned subtitle copies, then confirm the batch. Source subtitles stay in place.</p>
+          <p class="eyebrow" data-l10n-key="localCopyPlanner">Local copy planner</p>
+          <h1 data-l10n-key="appTitle">Subtitle Renamer</h1>
+          <p class="lede" data-l10n-key="lede">Choose a folder, review planned subtitle copies, then confirm the batch. Source subtitles stay in place.</p>
+        </div>
+        <div class="settings-menu" data-settings-menu>
+          <button class="button button--secondary" type="button" id="settings-menu-button" aria-haspopup="menu" aria-expanded="false" aria-controls="settings-menu" data-action="settings" data-l10n-key="settings">Settings</button>
+          <ul id="settings-menu" role="menu" aria-labelledby="settings-menu-button" hidden>
+            <li role="none">
+              <button type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu" data-action="open-theme-menu" data-l10n-key="theme">Theme</button>
+              <ul id="theme-menu" role="menu" aria-label="Theme" data-l10n-aria-label="theme" hidden>
+                <li role="none"><button type="button" role="menuitemradio" aria-checked="true" data-theme-choice="system" data-l10n-key="themeSystem">System</button></li>
+                <li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-theme-choice="light" data-l10n-key="themeLight">Light</button></li>
+                <li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-theme-choice="dark" data-l10n-key="themeDark">Dark</button></li>
+              </ul>
+            </li>
+            <li role="none">
+              <button type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="language-menu" data-action="open-language-menu" data-l10n-key="language">Language</button>
+              <ul id="language-menu" role="menu" aria-label="Language" data-l10n-aria-label="language" hidden>
+                <li role="none"><button type="button" role="menuitemradio" aria-checked="true" data-locale-choice="en" data-l10n-key="languageEnglish">English</button></li>
+                <li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-locale-choice="pt-BR" data-l10n-key="languagePortugueseBrazil">Português (Brasil)</button></li>
+              </ul>
+            </li>
+          </ul>
         </div>
       </header>
 
+      <section class="progress-tracker" aria-label="Workflow progress" data-l10n-aria-label="progressLabel" data-progress-stepper>
+        <ol class="progress-tracker__list">
+          <li class="progress-step progress-step--choose" data-progress-step="choose-folder" aria-current="step">
+            <span class="progress-step__marker" aria-hidden="true"><span class="progress-step__number">1</span></span>
+            <span class="progress-step__copy">
+              <span class="progress-step__label" data-l10n-key="progressChooseFolder">Select folder</span>
+              <span class="progress-step__description" data-l10n-key="progressChooseFolderDescription">Choose a directory</span>
+            </span>
+          </li>
+          <li class="progress-tracker__connector" aria-hidden="true" data-progress-connector="choose-review"></li>
+          <li class="progress-step progress-step--review" data-progress-step="review-plan">
+            <span class="progress-step__marker" aria-hidden="true"><span class="progress-step__number">2</span></span>
+            <span class="progress-step__copy">
+              <span class="progress-step__label" data-l10n-key="progressReviewMapping">Review mapping</span>
+              <span class="progress-step__description" data-l10n-key="progressReviewMappingDescription">Preview matches</span>
+            </span>
+          </li>
+          <li class="progress-tracker__connector" aria-hidden="true" data-progress-connector="review-confirm"></li>
+          <li class="progress-step progress-step--confirm" data-progress-step="confirm-copy">
+            <span class="progress-step__marker" aria-hidden="true"><span class="progress-step__number">3</span></span>
+            <span class="progress-step__copy">
+              <span class="progress-step__label" data-l10n-key="progressConfirmCopy">Confirm copy</span>
+              <span class="progress-step__description" data-l10n-key="progressConfirmCopyDescription">Write subtitles</span>
+            </span>
+          </li>
+        </ol>
+      </section>
+
       <main class="shell__main" id="main-content">
-        <section class="panel selected-folder" aria-labelledby="folder-title" data-selected-folder-area>
+        <section class="panel selected-folder" aria-labelledby="folder-title" data-workflow-region="choose-folder" data-selected-folder-area>
           <div class="panel__heading">
             <div>
-              <p class="eyebrow">Selected folder</p>
-              <h2 id="folder-title">Source directory</h2>
+              <p class="eyebrow" data-l10n-key="selectedFolder">Selected folder</p>
+              <h2 id="folder-title" data-l10n-key="sourceDirectory">Source directory</h2>
             </div>
-            <button class="button button--secondary" type="button" data-action="select-folder">Select folder</button>
+            <button class="button button--secondary" type="button" data-action="select-folder" data-l10n-key="selectFolder">Select folder</button>
           </div>
           <p class="folder-path" data-folder-label>
-            <bdi>No folder selected.</bdi>
+            <bdi data-l10n-key="noFolderSelected">No folder selected.</bdi>
           </p>
-          <p class="hint">Only direct files in the chosen folder will be considered.</p>
+          <p class="hint" data-l10n-key="folderHint">Only direct files in the chosen folder will be considered.</p>
+          <p class="hint" data-l10n-key="supportedExtensions">Supported videos: mkv, mp4, avi, mov, m4v, webm. Supported subtitles: ass, ssa, srt, vtt.</p>
         </section>
 
-        <section class="status-line" aria-label="Current status">
-          <strong>Status</strong>
-          <p id="status-message" aria-live="polite" data-status-message>Waiting for a folder.</p>
+        <section class="status-line" aria-label="Current status" data-l10n-aria-label="statusRegionLabel">
+          <strong data-l10n-key="statusLabel">Status</strong>
+          <p id="status-message" aria-live="polite" data-status-message data-l10n-key="statusWaiting">Waiting for a folder.</p>
         </section>
 
-        <div class="work-grid" aria-label="Copy review">
+        <section class="work-grid" aria-label="Copy review" data-l10n-aria-label="copyReviewLabel" data-workflow-region="review-plan">
           <section class="panel" aria-labelledby="planned-title" data-dynamic-group data-planned-area hidden>
             <div class="panel__heading">
               <div>
-                <p class="eyebrow">Plan</p>
-                <h2 id="planned-title">Planned copies</h2>
+                <p class="eyebrow" data-l10n-key="plan">Plan</p>
+                <h2 id="planned-title" data-l10n-key="plannedCopies">Planned copies</h2>
               </div>
               <span class="counter" data-planned-count>0</span>
             </div>
-            <ol class="file-list" data-planned-list></ol>
+            <table class="mapping-table">
+              <thead>
+                <tr>
+                  <th scope="col" data-l10n-key="sourceSubtitle">Source subtitle</th>
+                  <th scope="col" data-l10n-key="targetSubtitle">Target filename</th>
+                  <th scope="col" data-l10n-key="statusColumn">Status</th>
+                </tr>
+              </thead>
+              <tbody data-planned-list></tbody>
+            </table>
           </section>
 
           <section class="panel" aria-labelledby="skipped-title" data-dynamic-group data-skipped-area hidden>
             <div class="panel__heading">
               <div>
-                <p class="eyebrow">Skipped</p>
-                <h2 id="skipped-title">Skipped files</h2>
+                <p class="eyebrow" data-l10n-key="skipped">Skipped</p>
+                <h2 id="skipped-title" data-l10n-key="skippedFiles">Skipped files</h2>
               </div>
               <span class="counter counter--warning" data-skipped-count>0</span>
             </div>
-            <ol class="file-list" data-skipped-list></ol>
+            <table class="mapping-table">
+              <thead>
+                <tr>
+                  <th scope="col" data-l10n-key="sourceSubtitle">Source subtitle</th>
+                  <th scope="col" data-l10n-key="skipReasonColumn">Reason</th>
+                </tr>
+              </thead>
+              <tbody data-skipped-list></tbody>
+            </table>
           </section>
-        </div>
+        </section>
 
         <section class="empty-state" aria-labelledby="empty-title" data-empty-state>
-          <p class="eyebrow">No plan loaded</p>
-          <h2 id="empty-title">Ready to choose a folder</h2>
-          <p>Select a folder to scan direct files and preview subtitle copies before confirming.</p>
-          <p class="probe-output" aria-label="Hostile filename probe" hidden><bdi data-hostile-output></bdi></p>
+          <p class="eyebrow" data-l10n-key="noPlanLoaded">No plan loaded</p>
+          <h2 id="empty-title" data-l10n-key="emptyReadyTitle">Ready to choose a folder</h2>
+          <p data-l10n-key="emptyReadyBody">Select a folder to scan direct files and preview subtitle copies before confirming.</p>
+          <p class="probe-output" aria-label="Hostile filename probe" data-l10n-aria-label="hostileProbeLabel" hidden><bdi data-hostile-output></bdi></p>
         </section>
 
-        <section class="panel confirmation" aria-labelledby="confirm-title" data-dynamic-group data-confirmation hidden>
-          <div>
-            <p class="eyebrow">Confirm</p>
-            <h2 id="confirm-title">Copy planned subtitles?</h2>
-          </div>
-          <p>This copies subtitle contents to matching video filenames and keeps source subtitle files in place.</p>
-          <div class="inline-actions">
-            <button class="button button--primary" type="button" data-action="confirm-copy" disabled>Yes, copy</button>
-            <button class="button button--secondary" type="button" data-action="cancel-copy" disabled>Cancel</button>
-          </div>
-        </section>
+        <section aria-label="Confirm copy" data-l10n-aria-label="confirmCopyLabel" data-workflow-region="confirm-copy">
+          <section class="panel confirmation" aria-labelledby="confirm-title" data-dynamic-group data-confirmation hidden>
+            <div>
+              <p class="eyebrow" data-l10n-key="confirm">Confirm</p>
+              <h2 id="confirm-title" data-l10n-key="copyPlannedSubtitles">Copy planned subtitles?</h2>
+            </div>
+            <p data-l10n-key="confirmBody">This copies subtitle contents to matching video filenames and keeps source subtitle files in place.</p>
+            <ol class="file-list" data-confirmation-list></ol>
+            <div class="inline-actions">
+              <button class="button button--primary" type="button" data-action="confirm-copy" data-l10n-key="yesCopy" disabled>Yes, copy</button>
+              <button class="button button--secondary" type="button" data-action="cancel-copy" data-l10n-key="startOver" disabled>Start over</button>
+            </div>
+          </section>
 
-        <section class="outcomes" aria-label="Copy outcome groups" data-dynamic-group data-outcomes hidden>
-          <section class="panel" aria-labelledby="completed-title" data-outcome-group="completed" hidden>
-            <p class="eyebrow">Completed</p>
-            <h2 id="completed-title">Copied files</h2>
-            <ol class="file-list" data-completed-list></ol>
-          </section>
-          <section class="panel" aria-labelledby="failed-title" data-outcome-group="failed" hidden>
-            <p class="eyebrow">Failed</p>
-            <h2 id="failed-title">Failed file</h2>
-            <ol class="file-list" data-failed-list></ol>
-          </section>
-          <section class="panel" aria-labelledby="pending-title" data-outcome-group="pending" hidden>
-            <p class="eyebrow">Pending</p>
-            <h2 id="pending-title">Not copied after failure</h2>
-            <ol class="file-list" data-pending-list></ol>
+          <section class="outcomes" aria-label="Copy outcome groups" data-l10n-aria-label="outcomesLabel" data-dynamic-group data-outcomes hidden>
+            <section class="panel" aria-labelledby="completed-title" data-outcome-group="completed" hidden>
+              <p class="eyebrow" data-l10n-key="completed">Completed</p>
+              <h2 id="completed-title" data-l10n-key="copiedFiles">Copied files</h2>
+              <ol class="file-list" data-completed-list></ol>
+            </section>
+            <section class="panel" aria-labelledby="failed-title" data-outcome-group="failed" hidden>
+              <p class="eyebrow" data-l10n-key="failed">Failed</p>
+              <h2 id="failed-title" data-l10n-key="failedFile">Failed file</h2>
+              <ol class="file-list" data-failed-list></ol>
+            </section>
+            <section class="panel" aria-labelledby="pending-title" data-outcome-group="pending" hidden>
+              <p class="eyebrow" data-l10n-key="pending">Pending</p>
+              <h2 id="pending-title" data-l10n-key="pendingAfterFailure">Not copied after failure</h2>
+              <ol class="file-list" data-pending-list></ol>
+            </section>
           </section>
         </section>
       </main>
 
-      <footer class="action-bar" aria-label="Actions">
-        <button class="button button--secondary" type="button" data-action="rescan" disabled>Rescan</button>
-        <button class="button button--primary" type="button" data-action="copy" disabled>Copy subtitles</button>
+      <footer class="action-bar" aria-label="Actions" data-l10n-aria-label="actionsLabel">
+        <button class="button button--secondary" type="button" data-action="rescan" data-l10n-key="rescan" disabled>Rescan</button>
+        <button class="button button--secondary" type="button" data-action="review-plan" data-l10n-key="reviewCurrentPlan" disabled>Review current plan</button>
+        <button class="button button--secondary" type="button" data-action="back" data-l10n-key="back" disabled>Back</button>
+        <button class="button button--secondary" type="button" data-action="start-over" data-l10n-key="startOver" disabled>Start over</button>
+        <button class="button button--primary" type="button" data-action="copy" data-l10n-key="continue" disabled>Continue</button>
       </footer>
     </div>
   </body>
