@@ -95,7 +95,8 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
-          mkdir -p dist
+          rm -rf dist
+          mkdir dist
           # Exactly one NSIS exe
           nsis_files=( target/release/bundle/nsis/*.exe )
           if [[ ${#nsis_files[@]} -ne 1 ]]; then
@@ -149,7 +150,8 @@ jobs:
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
-          mkdir -p dist
+          rm -rf dist
+          mkdir dist
           # Exactly one deb
           deb_files=( target/release/bundle/deb/*.deb )
           if [[ ${#deb_files[@]} -ne 1 ]]; then
