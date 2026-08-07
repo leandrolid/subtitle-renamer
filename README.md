@@ -1,203 +1,118 @@
-# subtitle-renamer
+# Subtitle Renamer
 
-Copy subtitle contents to filenames that match nearby video files, while keeping the original subtitle files in place.
+Copy subtitle files to video-matching filenames without renaming, moving, or deleting the originals.
 
-```bash
-cargo run -- [DIR]
-```
+[![CI](https://github.com/leandrolid/subtitle-renamer/actions/workflows/ci.yml/badge.svg)](https://github.com/leandrolid/subtitle-renamer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/leandrolid/subtitle-renamer)](https://github.com/leandrolid/subtitle-renamer/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`DIR` is optional and defaults to the current directory.
-The scan only checks direct files in that directory. It doesn't recurse into subdirectories.
+[Português (Brasil)](README.pt-BR.md)
 
-## supported files
+## Why Subtitle Renamer?
 
-Videos: `mkv`, `mp4`, `avi`, `mov`, `m4v`, `webm`
-Subtitles: `ass`, `ssa`, `srt`, `vtt`
-Files with unsupported extensions are ignored.
+Media players usually discover subtitles when the subtitle and video filenames match. Subtitle Renamer finds episode identifiers, previews the safe copies it can make, and creates matching subtitle filenames while preserving every source file.
 
-## matching
-
-The matcher looks for episode identifiers in video and subtitle stems:
-- `episode N`
-- `ep N`
-- `S<season>E<episode>`
-- `<season>x<episode>`
-- a final bare number, only at the stem end or before trailing `[metadata]`
-
-The target path is:
 ```text
-<video stem>.<subtitle extension>
-```
-Existing targets are never overwritten.
+Show.S01E02.1080p.mkv
+Subtitle.S01E02.en.srt
 
-## confirmation and copies
+becomes
 
-The CLI prints a preview with `COPY` and `SKIP` lines. A non-empty copy plan gets one batch confirmation; otherwise it prints `No files to copy.` without reading input.
-Only `y` or `yes`, case-insensitive, proceeds. Anything else declines.
-The operation copies subtitle contents. It doesn't rename, move, or delete source subtitle files.
-The first copy failure stops the batch and reports completed, failed, and pending work.
-
-## common skips
-
-- no matching video
-- ambiguous seasonless match across seasons
-- multiple distinct identifiers in one filename
-- subtitle already has the target name
-- more than one subtitle would create the same target
-- destination file already exists
-- supported subtitle with a non-UTF stem (`unsupported-name`); non-UTF video stems are excluded from matching
-
-## tests
-```bash
-cargo test --workspace --locked
-cargo test -p subtitle-renamer-cli --test cli --locked
+Show.S01E02.1080p.mkv
+Show.S01E02.1080p.srt    <- new copy
+Subtitle.S01E02.en.srt   <- original preserved
 ```
 
-## build and run locally
+## Features
 
-### CLI
+- CLI and desktop interfaces
+- Preview and confirmation before copying
+- No overwrite, move, rename, or delete operations
+- Deterministic handling of ambiguous and duplicate matches
+- Episode matching for `episode N`, `ep N`, `S01E02`, `1x02`, and strict trailing episode numbers
+- Native release packages for Linux and Windows
 
-Debug build:
-```bash
-cargo build
-./target/debug/subtitle-renamer [DIR]
-```
+## Install
 
-Release build:
-```bash
-cargo build --release
-./target/release/subtitle-renamer [DIR]
-```
+Download the latest package for your platform from [GitHub Releases](https://github.com/leandrolid/subtitle-renamer/releases/latest).
 
-`DIR` works the same as `cargo run -- [DIR]`: it points at the directory to scan, defaults to the current directory, and only direct files are checked. Matching subtitle contents are copied to video-matched subtitle filenames. Source subtitle files stay in place.
+| Platform | Desktop | CLI |
+| --- | --- | --- |
+| Windows x86_64 | NSIS installer (`*-windows-x86_64-nsis.exe`) | Executable (`*-windows-x86_64.exe`) |
+| Linux x86_64 | Debian package (`*.deb`) or AppImage (`*.AppImage`) | Executable (`*-linux-x86_64`) |
 
-### Desktop app
+Release assets are unsigned. Check the downloaded files against `checksums.txt` before running them:
 
-The desktop app uses the [create-tauri-app](https://tauri.app) pattern: a React + TypeScript + Vite frontend at the workspace root alongside the Tauri backend in `crates/desktop`.
-
-**Prerequisites** — Node.js 24 and either `cargo tauri` or `@tauri-apps/cli` (installed via npm). If `cargo tauri` is missing, install the pinned CLI:
-```bash
-cargo install tauri-cli --version 2.11.4 --locked
-```
-
-Install frontend dependencies (first time only, installs locked dependencies reproducibly):
-```bash
-npm ci --ignore-scripts
-```
-
-#### Development
-
-Launch the app with hot-reload from the workspace root:
-```bash
-npm run tauri dev
-# or equivalently:
-cd crates/desktop && cargo tauri dev
-```
-
-This starts the Vite dev server on `http://localhost:1420` and opens the Tauri window pointing at it.
-
-#### Quality gates
-
-Run the desktop quality gates from the workspace root:
-```bash
-cargo fmt --all --check
-cargo clippy -p subtitle-renamer-desktop --all-targets --all-features -- -D warnings
-cargo test -p subtitle-renamer-desktop --locked
-```
-
-Build and type-check the frontend only:
-```bash
-npm run build
-```
-
-#### Production builds
-
-Build the debug app without bundles from `crates/desktop`:
-```bash
-cd crates/desktop
-cargo tauri build --debug --no-bundle --ci --no-sign
-```
-
-The debug executable is written to `target/debug/subtitle-renamer-desktop`. Run it directly from the workspace root after the build:
-```bash
-./target/debug/subtitle-renamer-desktop
-```
-
-Build Linux packages from `crates/desktop`:
-```bash
-cd crates/desktop
-cargo tauri build --ci --no-sign --bundles deb,appimage
-```
-
-The normal local package outputs are:
-- `target/release/bundle/deb/*.deb`
-- `target/release/bundle/appimage/*.AppImage`
-
-Install and run the deb:
-```bash
-sudo apt install ./target/release/bundle/deb/*.deb
-subtitle-renamer-desktop
-```
-
-Run the AppImage:
-```bash
-chmod +x ./target/release/bundle/appimage/*.AppImage
-./target/release/bundle/appimage/*.AppImage
-```
-
-Prior local Docker package proof cached deb and AppImage files under `.omo/docker-output/release/bundle/...`. That is ignored session output, not the durable default output path.
-
-## releases
-
-### current version
-
-v0.1.0 is already aligned across all four version-bearing files: `Cargo.toml` (`[workspace.package] version`), `crates/desktop/tauri.conf.json` (`"version"`), `package.json`, and both version fields in `package-lock.json`. The maintainer creates and pushes the tag to trigger the workflow.
-
-### bumping to a later version (e.g., v1.2.3)
-
-1. Edit `Cargo.toml` `[workspace.package] version` and `crates/desktop/tauri.conf.json` `"version"` to `1.2.3`.
-2. Run `npm version 1.2.3 --no-git-tag-version` — updates `package.json` and both `package-lock.json` version fields without creating a commit or tag.
-3. Run `cargo check --workspace --locked` to verify (omit `--locked` only if the workspace-version change requires refreshing `Cargo.lock`, then inspect the exact lock diff).
-4. Run all quality gates from `AGENTS.md`.
-5. Commit the source bump.
-6. Merge that commit to `main`.
-7. From the merged `main`, create an annotated strict SemVer tag and push it:
-   ```bash
-   git tag -a v1.2.3 -m "v1.2.3"
-   git push origin v1.2.3
-   ```
-8. The `package.yml` workflow runs: prepare, build, smoke tests, then the release job publishes.
-
-### manual dispatch
-
-Running the workflow via manual dispatch (`workflow_dispatch`) runs prepare, builds, and smoke tests but never starts the release job. It's not a publishing trigger.
-
-### release assets
-
-Each release publishes five versioned assets plus a checksum file:
-
-- `subtitle-renamer-desktop-vX.Y.Z-windows-x86_64-nsis.exe`
-- `subtitle-renamer-desktop-vX.Y.Z-linux-x86_64.deb`
-- `subtitle-renamer-desktop-vX.Y.Z-linux-x86_64.AppImage`
-- `subtitle-renamer-cli-vX.Y.Z-windows-x86_64.exe`
-- `subtitle-renamer-cli-vX.Y.Z-linux-x86_64`
-- `checksums.txt`
-
-Verify checksums after downloading:
 ```bash
 sha256sum -c checksums.txt
 ```
 
-Linux assets need an executable bit before running:
+On Linux, make the CLI or AppImage executable first:
+
 ```bash
-chmod +x subtitle-renamer-cli-vX.Y.Z-linux-x86_64
-chmod +x subtitle-renamer-desktop-vX.Y.Z-linux-x86_64.AppImage
+chmod +x subtitle-renamer-*-linux-x86_64*
 ```
 
-### release notes
+### Build From Source
 
-The first release links all prior commits as history. Later releases include a comparison range link to the previous tag.
+[Install Rust](https://www.rust-lang.org/tools/install), clone the repository, and install the CLI:
 
-### fail-closed behavior
+```bash
+git clone https://github.com/leandrolid/subtitle-renamer.git
+cd subtitle-renamer
+cargo install --path crates/cli --locked
+```
 
-Any existing or draft release for the tag, and any unexpected GitHub API response, fails the release job. Partial drafts are not overwritten or auto-deleted.
+Desktop source builds additionally require Node.js 24 and the [Tauri system dependencies](https://v2.tauri.app/start/prerequisites/) for your platform. See [Contributing](CONTRIBUTING.md#desktop-development) for the development commands.
+
+## Use The CLI
+
+Run it with a directory, or omit the directory to scan the current one:
+
+```bash
+subtitle-renamer /path/to/episodes
+subtitle-renamer
+```
+
+The scan is non-recursive and considers direct files only. The CLI prints every planned copy and skip, then asks once for confirmation. Only `y` or `yes`, case-insensitive, proceeds.
+
+```text
+COPY: "Subtitle.S01E02.en.srt" -> "Show.S01E02.1080p.srt"
+
+Copy 1 file(s)? [y/N]
+```
+
+Run `subtitle-renamer --help` for the complete matching summary.
+
+## Supported Files
+
+| Type | Extensions |
+| --- | --- |
+| Video | `mkv`, `mp4`, `avi`, `mov`, `m4v`, `webm` |
+| Subtitle | `ass`, `ssa`, `srt`, `vtt` |
+
+Unsupported extensions are ignored. A target uses the video stem and the source subtitle extension:
+
+```text
+<video stem>.<subtitle extension>
+```
+
+## Safety Guarantees
+
+- Source subtitles always remain in place.
+- Existing target files are never overwritten.
+- Ambiguous matches and duplicate targets are skipped instead of guessed.
+- A non-empty plan is shown before any copy begins.
+- The first copy failure stops the batch and reports completed, failed, and pending work.
+
+Common skips include no matching video, ambiguous seasonless matches, multiple identifiers in one filename, an existing destination, and multiple subtitles competing for one target.
+
+## Contributing
+
+Bug reports and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, architecture boundaries, and quality gates. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+
+## License
+
+Licensed under the [MIT License](LICENSE).

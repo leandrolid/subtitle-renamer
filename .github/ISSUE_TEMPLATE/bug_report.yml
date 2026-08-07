@@ -1,0 +1,75 @@
+name: Bug report
+description: Report reproducible incorrect behavior in Subtitle Renamer
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Search existing issues first and do not disclose security vulnerabilities here; follow SECURITY.md instead.
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface
+      options:
+        - CLI
+        - Desktop
+        - Both
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Use `subtitle-renamer --version` for the CLI or the release tag for the desktop app.
+      placeholder: v0.1.2
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04 or Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: filenames
+    attributes:
+      label: Example filenames
+      description: List minimal, anonymized video and subtitle filenames that reproduce the problem. Do not upload copyrighted media.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Put the listed files in one directory.
+        2. Run ...
+        3. Confirm ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and output
+      description: Remove private paths or personal information before pasting output.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: This report does not contain a security vulnerability or private data.
+          required: true
