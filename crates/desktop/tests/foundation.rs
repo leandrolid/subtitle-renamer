@@ -222,7 +222,7 @@ fn configuration_guard_rejects_forbidden_policy_changes() {
             "\"devUrl\": \"http://localhost:1420\"",
             "\"devUrl\": \"https://evil.example.com\"",
         ),
-        CONFIG.replace("0.1.0", "0.0.0"),
+        CONFIG.replace(env!("CARGO_PKG_VERSION"), "0.0.0"),
         CONFIG.replace(
             "\"active\": true",
             "\"active\": true, \"createUpdaterArtifacts\": true",
