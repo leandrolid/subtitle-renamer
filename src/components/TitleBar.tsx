@@ -19,6 +19,8 @@ export function TitleBar({ title, rightSlot, leftSlot }: Props) {
       onMouseDown={async (event) => {
         if (
           event.button !== 0 ||
+          !(event.target instanceof Node) ||
+          !event.currentTarget.contains(event.target) ||
           (event.target instanceof Element && event.target.closest("button"))
         ) {
           return;
