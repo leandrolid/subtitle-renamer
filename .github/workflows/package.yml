@@ -363,7 +363,7 @@ jobs:
             --draft \
             --verify-tag \
             --target "$EXPECTED_COMMIT" \
-            --title "Subtitle Renamer $TAG" \
+            --title "$TAG" \
             --notes-file release-notes.md
       - name: Upload release assets
         env:
