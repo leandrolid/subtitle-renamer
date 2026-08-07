@@ -203,7 +203,7 @@ jobs:
       - name: Assert --version output
         shell: pwsh
         run: |
-          $cli = Get-ChildItem -Path bundle -Filter '*-windows-x86_64.exe' -Exclude '*-nsis.exe' | Select-Object -First 1
+          $cli = Get-ChildItem -Path bundle -Filter '*-cli-*-windows-x86_64.exe' | Select-Object -First 1
           if ($null -eq $cli) { throw 'CLI exe was not downloaded' }
           $result = & $cli.FullName --version 2>&1
           $stdout = $result | Out-String
@@ -281,7 +281,15 @@ jobs:
   release:
     name: Publish GitHub Release
     if: needs.prepare.outputs.publish == 'true'
-    needs: [prepare, smoke-windows-nsis, smoke-windows-cli, smoke-linux-deb, smoke-linux-appimage, smoke-linux-cli]
+    needs:
+      [
+        prepare,
+        smoke-windows-nsis,
+        smoke-windows-cli,
+        smoke-linux-deb,
+        smoke-linux-appimage,
+        smoke-linux-cli,
+      ]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
