@@ -73,22 +73,44 @@ cargo build --release
 
 ### Desktop app
 
-The desktop app is the Tauri package in `crates/desktop`. If `cargo tauri` is missing, install the pinned CLI used by the package workflow:
+The desktop app uses the [create-tauri-app](https://tauri.app) pattern: a React + TypeScript + Vite frontend at the workspace root alongside the Tauri backend in `crates/desktop`.
+
+**Prerequisites** — Node.js and either `cargo tauri` or `@tauri-apps/cli` (installed via npm). If `cargo tauri` is missing, install the pinned CLI:
 ```bash
 cargo install tauri-cli --version 2.11.4 --locked
 ```
 
-Run the desktop quality gates from the repository root:
+Install frontend dependencies (first time only):
 ```bash
-cargo fmt --all -- --check
+npm install
+```
+
+#### Development
+
+Launch the app with hot-reload from the workspace root:
+```bash
+npm run tauri dev
+# or equivalently:
+cd crates/desktop && cargo tauri dev
+```
+
+This starts the Vite dev server on `http://localhost:1420` and opens the Tauri window pointing at it.
+
+#### Quality gates
+
+Run the desktop quality gates from the workspace root:
+```bash
+cargo fmt --all --check
 cargo clippy -p subtitle-renamer-desktop --all-targets --all-features -- -D warnings
 cargo test -p subtitle-renamer-desktop --locked
 ```
 
-Launch the local app from source:
+Build and type-check the frontend only:
 ```bash
-cargo run -p subtitle-renamer-desktop
+npm run build
 ```
+
+#### Production builds
 
 Build the debug app without bundles from `crates/desktop`:
 ```bash
@@ -96,7 +118,7 @@ cd crates/desktop
 cargo tauri build --debug --no-bundle --ci --no-sign
 ```
 
-The normal debug executable is written to `target/debug/subtitle-renamer-desktop`. Run it directly from the repository root after the build:
+The debug executable is written to `target/debug/subtitle-renamer-desktop`. Run it directly from the workspace root after the build:
 ```bash
 ./target/debug/subtitle-renamer-desktop
 ```
