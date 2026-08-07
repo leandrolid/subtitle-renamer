@@ -24,7 +24,7 @@ jobs:
       commit: ${{ steps.meta.outputs.commit }}
       publish: ${{ steps.meta.outputs.publish }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Fetch tags
@@ -62,7 +62,7 @@ jobs:
     needs: [prepare]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
@@ -71,13 +71,13 @@ jobs:
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         shell: bash
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
-      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb5f0875af4d5e3e2b2422
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: 1.97.1
-      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890bd2f3bd12f3510d
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: npm
@@ -103,7 +103,7 @@ jobs:
           fi
           cp "${nsis_files[0]}" "dist/subtitle-renamer-desktop-${TAG}-windows-x86_64-nsis.exe"
           cp target/release/subtitle-renamer.exe "dist/subtitle-renamer-cli-${TAG}-windows-x86_64.exe"
-      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68cf7e19c4cf304b0638bd5
+      - uses: actions/upload-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-windows-x86_64
           path: dist/
@@ -114,7 +114,7 @@ jobs:
     needs: [prepare]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
@@ -122,17 +122,17 @@ jobs:
         env:
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
-      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb5f0875af4d5e3e2b2422
+      - uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: 1.97.1
       - name: Install Linux bundle prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libfuse2
-      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890bd2f3bd12f3510d
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: npm
@@ -163,7 +163,7 @@ jobs:
           fi
           cp "${appimage_files[0]}" "dist/subtitle-renamer-desktop-${TAG}-linux-x86_64.AppImage"
           cp target/release/subtitle-renamer "dist/subtitle-renamer-cli-${TAG}-linux-x86_64"
-      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68cf7e19c4cf304b0638bd5
+      - uses: actions/upload-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
           path: dist/
@@ -174,7 +174,7 @@ jobs:
     needs: [prepare, package-windows-nsis]
     runs-on: windows-latest
     steps:
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-windows-x86_64
           path: bundle
@@ -196,7 +196,7 @@ jobs:
     needs: [prepare, package-windows-nsis]
     runs-on: windows-latest
     steps:
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-windows-x86_64
           path: bundle
@@ -218,7 +218,7 @@ jobs:
     needs: [prepare, package-linux]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
           path: bundle
@@ -237,7 +237,7 @@ jobs:
     needs: [prepare, package-linux]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
           path: bundle
@@ -259,7 +259,7 @@ jobs:
     needs: [prepare, package-linux]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
           path: bundle
@@ -288,7 +288,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
@@ -304,11 +304,11 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         run: bash .github/scripts/prepare-release.sh verify-remote-tag origin "$TAG" "$EXPECTED_COMMIT"
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-windows-x86_64
           path: dist/
-      - uses: actions/download-artifact@cc65e827c83e2b0238dd9af5b1ceebca3e3e0cdd
+      - uses: actions/download-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
           path: dist/
