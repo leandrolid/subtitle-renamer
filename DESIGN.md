@@ -2,79 +2,131 @@
 
 ## 1. Atmosphere & Identity
 
-Subtitle Renamer feels like a quiet file utility: precise, calm, and resistant to surprises. The signature is ledger clarity: selected folders, planned copies, skipped files, confirmation, and outcomes are separated like a plain operations sheet rather than a dashboard.
+Subtitle Renamer is a quiet desktop file utility for a safe three-step copy flow: choose a folder, review planned subtitle copies, then confirm and read results. The visual tone is calm, technical, and explicit; it favors ledger clarity over decoration.
+
+The product name is always `Subtitle Renamer`. Screenshot references use `SubMatch`, but that name is reference-only and must not replace the app identity, document title, window title, or accessible labels. Files under `layout/` are read-only reference screenshots; they guide layout adaptation and are not generated proof or renderer output.
+
+The renderer keeps the existing safety posture: vanilla HTML/CSS/JavaScript, CSP-safe local assets, native buttons, and plaintext DOM construction for every filename, directory label, backend code, and result row. Dynamic file data belongs in `textContent` or `<bdi>` containers, never in markup strings.
+
+Reference deviations are intentional when screenshots contradict the engine or window contract:
+
+- The folder surface visually resembles a drop zone, but it is a button-driven native picker and must not promise folder dropping.
+- The scan is direct-file only and lists supported videos `mkv`, `mp4`, `avi`, `mov`, `m4v`, `webm` plus subtitles `ass`, `ssa`, `srt`, `vtt`.
+- No recent-folder memory, file sizes, score values, manual rematching, overwrite prompts, output-language suffixes, nested-folder claims, or fourth workflow step may appear.
+- The default viewport is `900x720`; the minimum supported viewport is `720x520`, so the wide screenshots are adapted rather than copied literally.
 
 ## 2. Color
 
-| Role | Token | Light | Usage |
-| --- | --- | --- | --- |
-| Surface/canvas | `--color-canvas` | `#f7f6f2` | App background |
-| Surface/base | `--color-surface` | `#ffffff` | Main window and cards |
-| Surface/muted | `--color-surface-muted` | `#f0eee8` | Inset regions and disabled controls |
-| Text/primary | `--color-text` | `#25231f` | Body text and headings |
-| Text/muted | `--color-muted` | `#69645c` | Descriptions, counters, secondary labels |
-| Border/default | `--color-border` | `#d8d3c8` | Panel and control borders |
-| Border/strong | `--color-border-strong` | `#aaa397` | Dividers and selected-folder frame |
-| Accent/action | `--color-action` | `#2f4d3a` | Primary actions and focus outline |
-| Accent/action-hover | `--color-action-hover` | `#243c2d` | Primary action hover |
-| Status/warning | `--color-warning` | `#805b15` | Skipped or cautious copy state |
-| Status/error | `--color-error` | `#8b2f24` | Failed copy state |
-| Status/success | `--color-success` | `#2f6842` | Completed copy state |
+Every color role has complete Light and Dark values. CSS must expose these roles as variables and consume variables only; SVG icon literals may mirror the same values because image-loaded SVG cannot read page CSS variables.
 
-Colors are light-only. Every CSS color must use these variables except the SVG icon, whose fills use the same token values literally because SVG cannot read page CSS variables when loaded as an image.
+| Role | Token | Light | Dark | Usage |
+| --- | --- | --- | --- | --- |
+| Canvas | `--color-canvas` | `#f7f6f2` | `#0c0f14` | App background |
+| App bar | `--color-app-bar` | `#ffffff` | `#121722` | Top bar and fixed chrome |
+| Surface | `--color-surface` | `#ffffff` | `#161b26` | Panels, cards, menus |
+| Surface raised | `--color-surface-raised` | `#fbfaf7` | `#1d2430` | Selection surface, table rows, active menu item |
+| Surface muted | `--color-surface-muted` | `#f0eee8` | `#242b36` | Disabled controls and quiet insets |
+| Text primary | `--color-text` | `#25231f` | `#f4f7fb` | Headings and primary labels |
+| Text secondary | `--color-muted` | `#69645c` | `#a8b0bd` | Descriptions, helper text, counters |
+| Text inverse | `--color-on-action` | `#ffffff` | `#ffffff` | Text on primary action blue |
+| Border default | `--color-border` | `#d8d3c8` | `#303846` | Panel, menu, table, and card borders |
+| Border strong | `--color-border-strong` | `#aaa397` | `#465061` | Active step, selected frame, focus fallback |
+| Action blue | `--color-action` | `#1f66d1` | `#4c8dff` | Primary buttons, active progress stepper, focus outline |
+| Action hover | `--color-action-hover` | `#174fa8` | `#6aa2ff` | Primary button hover and active menu highlight |
+| Success | `--color-success` | `#2f6842` | `#60c083` | Completed copy status and matched rows |
+| Warning | `--color-warning` | `#805b15` | `#d9a441` | Skipped files and caution status pills |
+| Error | `--color-error` | `#8b2f24` | `#ff7b72` | Failed copy status and alert text |
+| Neutral status | `--color-neutral-status` | `#6f6a61` | `#8f98a6` | Pending, unavailable, and future step states |
+
+Light keeps the existing warm utility palette while switching action/status emphasis to blue. Dark closely follows the references: near-black canvas, charcoal chrome, subtle gray borders, bright blue actions, green success, amber warnings, and gray future states. Use borders-only depth; no gradients, shadows, translucent glass, or external image textures.
 
 ## 3. Typography
 
 | Level | Token | Value | Usage |
 | --- | --- | --- | --- |
 | Font/UI | `--font-ui` | `ui-sans-serif, "Aptos", "Segoe UI", sans-serif` | All interface text |
-| Font/mono | `--font-mono` | `ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace` | File paths, IDs, and metadata |
-| H1 | `--type-h1` | `1.5rem / 1.2`, weight `650`, tracking `-0.02em` | Single app heading |
-| H2 | `--type-h2` | `1rem / 1.35`, weight `650` | Region titles |
-| Body | `--type-body` | `0.9375rem / 1.55`, weight `400` | Default copy |
-| Small | `--type-small` | `0.8125rem / 1.45`, weight `400` | Helper text and filenames |
-| Label | `--type-label` | `0.75rem / 1.35`, weight `700`, tracking `0.08em` | Uppercase labels |
+| Font/mono | `--font-mono` | `ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace` | File names, directory labels, IDs, backend codes |
+| H1 | `--type-h1` | `650 1.5rem / 1.2 var(--font-ui)`, tracking `-0.02em` | Single app heading |
+| H2 | `--type-h2` | `650 1.125rem / 1.35 var(--font-ui)` | Step titles and panel titles |
+| H3 | `--type-h3` | `650 1rem / 1.35 var(--font-ui)` | Card and group titles |
+| Body | `--type-body` | `400 0.9375rem / 1.55 var(--font-ui)` | Default copy |
+| Small | `--type-small` | `400 0.8125rem / 1.45 var(--font-ui)` | Helper text, filenames, menu metadata |
+| Label | `--type-label` | `700 0.75rem / 1.35 var(--font-ui)`, tracking `0.08em` | Uppercase labels, column headers, status pills |
 
-Body text never drops below the Small token. Filenames use `--font-mono` inside wrapping plaintext/bidi-safe containers.
+Body text never drops below Small. Filenames and directory labels use `--font-mono`, wrap anywhere, preserve bidirectional plaintext behavior, and are never localized. Text contrast must remain readable in both Light and Dark themes.
 
 ## 4. Spacing & Layout
 
-All spacing derives from `--space-1: 4px`.
+All spacing derives from the 4px base token. CSS may combine tokens with `calc()` when a repeated layout needs it, but no arbitrary pixel values are allowed outside this scale.
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `--space-1` | `4px` | Tight inline gaps |
-| `--space-2` | `8px` | Compact stacks |
-| `--space-3` | `12px` | Control padding |
-| `--space-4` | `16px` | Card padding and row gaps |
-| `--space-5` | `20px` | Window padding |
-| `--space-6` | `24px` | Section gaps |
-| `--space-8` | `32px` | Major shell gutters |
-| `--shell-min` | `320px` | Minimum supported content width |
+| `--space-1` | `4px` | Tight inline gaps, outline offsets |
+| `--space-2` | `8px` | Compact gaps, status pill padding |
+| `--space-3` | `12px` | Control padding, row gaps |
+| `--space-4` | `16px` | Card padding and section gaps |
+| `--space-5` | `20px` | Shell padding at compact sizes |
+| `--space-6` | `24px` | Major vertical rhythm |
+| `--space-8` | `32px` | Desktop gutters, large empty-state spacing |
+| `--space-10` | `40px` | Touch-friendly button and step target height |
+| `--space-12` | `48px` | App bar and large icon frame |
+| `--radius-1` | `4px` | Small pills and menu items |
+| `--radius-2` | `8px` | Buttons, inputs, table rows |
+| `--radius-3` | `12px` | Cards, selection surface, menus |
+| `--shell-min` | `720px` | Tauri minimum window width contract |
+| `--shell-default` | `900px` | Tauri default window width contract |
 | `--shell-max` | `1120px` | Maximum desktop shell width |
+| `--content-readable` | `672px` | Centered step 1 and step 3 content width |
+| `--content-review` | `896px` | Wider step 2 mapping review width |
 
-The shell uses a single-column flow at narrow widths and a two-column work area once space permits. No spacing value may bypass the token scale.
+At `900x720`, show the app bar, progress stepper, current step content, status, and reachable action row without horizontal scrolling. At `720x520`, stack dense controls, allow vertical scrolling, keep action rows reachable, and convert the mapping table to readable cards or a single-column grid without hiding data.
+
+The shell is centered in the window. Step 1 and step 3 use a centered composition with generous margins; step 2 uses the wider review surface for the mapping and skipped-file ledger. The top bar remains compact and stable across themes.
 
 ## 5. Components
 
-Selected folder area: a bordered surface with a label, wrapped plaintext path, and a native secondary button. Spacing uses `--space-3` and `--space-4`; the path uses `--font-mono`, `unicode-bidi: plaintext`, and wraps anywhere.
+Top app bar: compact local chrome containing the app icon, `Subtitle Renamer` identity, current helper copy, and a top-right Settings menu trigger. The bar uses surface/app-bar tokens, one bottom border, and no shadow.
 
-Work groups: planned copies, skipped files, and outcome groups share the same section pattern: title row, muted explanation, and bordered list. Dynamic groups start with `hidden` until later behavior populates them.
+Progress stepper: a non-clickable three-step progress stepper with connector lines. Current step uses `--color-action`; completed steps use the same action role plus text or an SVG check; future steps use neutral status and border roles. Each step exposes localized title and subtitle text.
 
-Action bar: a footer region containing native buttons only. Primary uses the action color token; secondary uses surface tokens; disabled states use muted tokens and remain focusable only when enabled.
+Folder selection surface: a large bordered native button for choose-and-scan. It may visually borrow the dashed-box structure from the references but must state direct-file scanning, native picker behavior, and the supported extensions. It does not advertise folder dropping or retained history.
 
-Inline confirmation: a hidden group near the action bar with plain text and native confirm/cancel buttons. Later behavior can reveal it without introducing dialogs.
+Mapping review: step 2 presents planned copies and skipped files from current DTO truth only. Desktop uses a semantic mapping table with source label, target label, and status/reason; compact width may use row cards. Skips have source plus localized reason, never target placeholders or score text.
+
+Status pills: small bordered labels using success, warning, error, or neutral tokens. They summarize actual states such as ready, skipped, completed, failed, or pending. They do not introduce unsupported review states.
+
+Confirmation and results: step 3 lists executable target labels and copy safety assurances before execution. After copy, the same step renders results groups for completed, failed, and pending rows. The confirmation copy says contents are copied, sources stay untouched, and existing targets are not overwritten by the engine.
+
+Action rows: native buttons only. Primary actions use action blue; secondary and tertiary actions use surface and border tokens. Disabled actions use muted tokens. Back never silently discards a plan; destructive reset language must be explicit.
+
+Settings menu: a top-right Settings menu with nested Theme and Language menus. Theme options are System, Light, and Dark. Language options are English and Português (Brasil). Menu items use `role="menuitem"` or `role="menuitemradio"`, maintain `aria-checked`, and support keyboard and pointer operation without hover-only paths.
+
+Focus treatment: all native buttons, menu items, and table/card interactive elements use a visible blue focus outline derived from `--color-action` and `--focus-ring`. Focus must meet contrast in Light and Dark themes.
 
 ## 6. Motion & Interaction
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| `--motion-fast` | `120ms ease-out` | Button color and transform changes |
-| `--motion-standard` | `180ms ease-in-out` | Surface state changes |
-| `--focus-ring` | `0 0 0 3px color-mix(in srgb, var(--color-action) 24%, transparent)` | Visible keyboard focus |
+| `--motion-fast` | `120ms ease-out` | Button color, opacity, and transform feedback |
+| `--motion-standard` | `180ms ease-in-out` | Menu, surface, and step state transitions |
+| `--focus-ring` | `0 0 0 3px color-mix(in srgb, var(--color-action) 28%, transparent)` | Visible keyboard focus |
 
-Only `transform` and `opacity` may animate. `prefers-reduced-motion: reduce` disables transitions and transform feedback.
+Only `transform`, `opacity`, and color/border-color transitions may animate. Reduced motion removes transforms and transitions while preserving state changes. Hover and active feedback are allowed only when they do not change layout.
+
+Settings interaction follows desktop menu expectations: open from the trigger, cycle with arrow keys, Home/End jump, Enter/Space activate, Right opens a submenu, Left closes it, Escape closes the deepest open menu then the root, and outside pointer closes with sensible focus restoration.
+
+Locale and theme changes rerender visible static and dynamic chrome without losing the current plan. System theme follows the OS only while Theme is System; explicit Light or Dark selections take precedence and persist through guarded local storage with in-memory fallback.
 
 ## 7. Depth & Surface
 
-Depth strategy is borders-only. The shell uses no box shadows, gradients, or translucent effects; hierarchy comes from tokenized surface color, borders, dividers, and spacing.
+Depth strategy is borders-only. Hierarchy comes from surface roles, border strength, typography, spacing, and restrained status color. Do not add `box-shadow`, gradient fills, translucent glass, remote fonts, remote icons, or external assets.
+
+Component surface rules:
+
+- App bar: `--color-app-bar` plus a single `--color-border` divider.
+- Main panels and Settings menu: `--color-surface` with `--color-border`.
+- Active selection, active menu item, and table rows: `--color-surface-raised` with `--color-border-strong` when selected.
+- Disabled or quiet insets: `--color-surface-muted` and muted text.
+- Results groups: same panel/list system as mapping review, with status color used only for labels, borders, and text accents.
+
+The final UI must look consistent when compared across Light and Dark themes: same structure, same 4px rhythm, same component rules, and the dark version closest to the screenshots without copying their unsupported product name or unavailable data.

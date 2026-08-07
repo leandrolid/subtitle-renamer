@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Subtitle Renamer icon</title>
+  <desc id="desc">A compact blue and neutral subtitle mark.</desc>
+  <rect x="12" y="16" width="40" height="32" rx="8" fill="none" stroke="#1f66d1" stroke-width="4"/>
+  <path d="M21 31h22M21 39h14" fill="none" stroke="#6f6a61" stroke-width="4" stroke-linecap="round"/>
+  <path d="M45 20l5 5h-5z" fill="#4c8dff"/>
+</svg>
