@@ -32,6 +32,23 @@ Legenda.S01E02.pt-BR.srt     <- original preservado
 - Identificação por `episode N`, `ep N`, `S01E02`, `1x02` e números estritos no fim do nome
 - Pacotes nativos para Linux e Windows
 
+## Aplicativo Desktop
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href=".github/assets/desktop-choose-folder.png"><img src=".github/assets/desktop-choose-folder.png" alt="Tela de seleção de pasta do aplicativo desktop Subtitle Renamer" /></a>
+    </td>
+    <td width="50%">
+      <a href=".github/assets/desktop-review-plan.png"><img src=".github/assets/desktop-review-plan.png" alt="Aplicativo desktop Subtitle Renamer exibindo um plano de cópia de legendas" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Escolha uma pasta</strong><br />Selecione um diretório com vídeos e arquivos de legenda.</td>
+    <td align="center"><strong>Revise cada correspondência</strong><br />Confira as cópias planejadas e legendas ignoradas antes de confirmar.</td>
+  </tr>
+</table>
+
 ## Instalação
 
 Baixe o pacote mais recente para sua plataforma em [GitHub Releases](https://github.com/leandrolid/subtitle-renamer/releases/latest).

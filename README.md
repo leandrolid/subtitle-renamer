@@ -32,6 +32,23 @@ Subtitle.S01E02.en.srt   <- original preserved
 - Episode matching for `episode N`, `ep N`, `S01E02`, `1x02`, and strict trailing episode numbers
 - Native release packages for Linux and Windows
 
+## Desktop App
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href=".github/assets/desktop-choose-folder.png"><img src=".github/assets/desktop-choose-folder.png" alt="Subtitle Renamer desktop app folder selection screen" /></a>
+    </td>
+    <td width="50%">
+      <a href=".github/assets/desktop-review-plan.png"><img src=".github/assets/desktop-review-plan.png" alt="Subtitle Renamer desktop app showing a proposed subtitle copy plan" /></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Choose a folder</strong><br />Select a directory containing videos and subtitle files.</td>
+    <td align="center"><strong>Review every match</strong><br />Inspect planned copies and skipped subtitles before confirming.</td>
+  </tr>
+</table>
+
 ## Install
 
 Download the latest package for your platform from [GitHub Releases](https://github.com/leandrolid/subtitle-renamer/releases/latest).
