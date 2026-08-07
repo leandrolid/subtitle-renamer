@@ -1,13 +1,17 @@
-const PACKAGE_YML: &str = include_str!("../../../.github/workflows/package.yml");
-const CI_YML: &str = include_str!("../../../.github/workflows/ci.yml");
-const RELEASE_METADATA_SH: &str = include_str!("../../../.github/scripts/release-metadata.sh");
-const PREPARE_RELEASE_SH: &str = include_str!("../../../.github/scripts/prepare-release.sh");
+const PACKAGE_YML_RAW: &str = include_str!("../../../.github/workflows/package.yml");
+const CI_YML_RAW: &str = include_str!("../../../.github/workflows/ci.yml");
+const RELEASE_METADATA_SH_RAW: &str = include_str!("../../../.github/scripts/release-metadata.sh");
+const PREPARE_RELEASE_SH_RAW: &str = include_str!("../../../.github/scripts/prepare-release.sh");
 const RUST_TOOLCHAIN: &str = include_str!("../../../rust-toolchain.toml");
 const NODE_VERSION: &str = include_str!("../../../.node-version");
 const CARGO_TOML: &str = include_str!("../../../Cargo.toml");
 const TAURI_CONF: &str = include_str!("../../../crates/desktop/tauri.conf.json");
 const PACKAGE_JSON: &str = include_str!("../../../package.json");
 const PACKAGE_LOCK: &str = include_str!("../../../package-lock.json");
+
+fn normalize(s: &str) -> String {
+    s.replace("\r\n", "\n")
+}
 
 fn count(h: &str, n: &str) -> usize {
     let mut c = 0;
@@ -57,7 +61,7 @@ fn check_policy(p: &str, meta: &str, prep: &str) -> Result<(), String> {
     if NODE_VERSION.trim() != "24" {
         return Err(".node-version trimmed != 24".into());
     }
-    if count(CI_YML, "toolchain: 1.97.1") < 2 {
+    if count(&normalize(CI_YML_RAW), "toolchain: 1.97.1") < 2 {
         return Err("ci.yml toolchain: 1.97.1 < 2".into());
     }
     if count(p, "toolchain: 1.97.1") < 2 {
@@ -175,10 +179,10 @@ fn check_policy(p: &str, meta: &str, prep: &str) -> Result<(), String> {
 
 #[test]
 fn workflow_policy_accepts_repository_files() {
-    assert_eq!(
-        check_policy(PACKAGE_YML, RELEASE_METADATA_SH, PREPARE_RELEASE_SH),
-        Ok(())
-    );
+    let p = normalize(PACKAGE_YML_RAW);
+    let meta = normalize(RELEASE_METADATA_SH_RAW);
+    let prep = normalize(PREPARE_RELEASE_SH_RAW);
+    assert_eq!(check_policy(&p, &meta, &prep), Ok(()));
     assert!(CARGO_TOML.contains("0.1.0"), "Cargo.toml version");
     assert!(TAURI_CONF.contains("0.1.0"), "tauri.conf.json version");
     assert!(PACKAGE_JSON.contains("0.1.0"), "package.json version");
@@ -187,28 +191,28 @@ fn workflow_policy_accepts_repository_files() {
 
 #[test]
 fn workflow_policy_rejects_mutations() {
-    let p = PACKAGE_YML;
-    let meta = RELEASE_METADATA_SH;
-    let prep = PREPARE_RELEASE_SH;
+    let p = normalize(PACKAGE_YML_RAW);
+    let meta = normalize(RELEASE_METADATA_SH_RAW);
+    let prep = normalize(PREPARE_RELEASE_SH_RAW);
 
     let cases: &[(&str, String, String, String)] = &[
         (
             "remove toolchain pin",
             p.replacen("toolchain: 1.97.1", "toolchain: stable", 1),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "comment workflow_dispatch",
             p.replace("workflow_dispatch:", "# workflow_dispatch:"),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "remove EVENT_NAME binding",
             p.replace("EVENT_NAME: ${{ github.event_name }}", ""),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "inject github.sha in run",
@@ -216,8 +220,8 @@ fn workflow_policy_rejects_mutations() {
                 "run: bash .github/scripts/release-metadata.sh",
                 "run: echo ${{ github.sha }} && bash .github/scripts/release-metadata.sh",
             ),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "unseal SHA pin",
@@ -225,8 +229,8 @@ fn workflow_policy_rejects_mutations() {
                 "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                 "actions/checkout@v4",
             ),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "add branches trigger",
@@ -234,75 +238,75 @@ fn workflow_policy_rejects_mutations() {
                 "tags:\n      - \"v*\"",
                 "tags:\n      - \"v*\"\n    branches: [main]",
             ),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "npm install instead of ci",
             p.replacen("npm ci --ignore-scripts", "npm install", 1),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "remove --paginate",
             p.replace("--paginate", ""),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "drop first verify-remote-tag",
             p.replacen("verify-remote-tag", "verify-tag", 1),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "--draft=false → --draft false",
             p.replace("--draft=false", "--draft false"),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "remove contents: write",
             p.replace("contents: write", ""),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "duplicate contents: write",
             p.replace("contents: read", "contents: read\n  contents: write"),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "--slurp → --no-slurp",
             p.replace("--slurp", "--no-slurp"),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "inject /releases/tags/",
             p.replace("--paginate", "--paginate\n          # /releases/tags/"),
-            meta.into(),
-            prep.into(),
+            meta.clone(),
+            prep.clone(),
         ),
         (
             "remove --tags from ls-remote",
-            p.into(),
-            meta.into(),
+            p.clone(),
+            meta.clone(),
             prep.replace("git ls-remote --tags", "git ls-remote"),
         ),
         (
             "remove --self-test",
-            p.into(),
+            p.clone(),
             meta.replace("--self-test", "--smoke-test"),
-            prep.into(),
+            prep.clone(),
         ),
     ];
 
     for (desc, mp, mmeta, mprep) in cases {
         assert_ne!(
             (mp.as_str(), mmeta.as_str(), mprep.as_str()),
-            (p, meta, prep),
+            (p.as_str(), meta.as_str(), prep.as_str()),
             "mutation '{desc}' produced no change"
         );
         assert!(
