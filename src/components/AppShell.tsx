@@ -26,7 +26,14 @@ interface Props {
 }
 
 export function AppShell({
-  state,
+  state: {
+    phase,
+    visibleStep,
+    currentPlan,
+    currentSnapshot,
+    currentOutcome,
+    ...state
+  },
   statusMsg,
   t,
   tp,
@@ -38,8 +45,6 @@ export function AppShell({
   onSetTheme,
   onSetLocale,
 }: Props) {
-  const { phase, visibleStep, currentPlan, currentSnapshot, currentOutcome } =
-    state;
   const busy =
     phase === "selecting" || phase === "scanning" || phase === "executing";
   const hasPlan = Boolean(currentPlan?.planId);
