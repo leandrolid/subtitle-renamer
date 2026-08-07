@@ -89,7 +89,7 @@ export function ReviewStep({
   if (visibleStep !== "review-plan") return null;
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 py-8">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 py-8 cursor-default select-none">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">

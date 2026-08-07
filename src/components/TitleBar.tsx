@@ -15,7 +15,7 @@ export function TitleBar({ title, rightSlot, leftSlot }: Props) {
 
   return (
     <header
-      className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-card py-2.5"
+      className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-card py-2.5 cursor-default select-none"
       onMouseDown={async (event) => {
         if (
           event.button !== 0 ||
@@ -26,11 +26,15 @@ export function TitleBar({ title, rightSlot, leftSlot }: Props) {
           return;
         }
         if (appWindow) {
-          await (event.detail === 2 ? appWindow.toggleMaximize() : appWindow.startDragging());
+          await (event.detail === 2
+            ? appWindow.toggleMaximize()
+            : appWindow.startDragging());
         }
       }}
     >
-      <div className="flex items-center justify-self-start pl-4">{leftSlot}</div>
+      <div className="flex items-center justify-self-start pl-4">
+        {leftSlot}
+      </div>
       <div className="flex items-center gap-2">
         <div className="flex size-6 items-center justify-center rounded-md bg-brand text-brand-foreground">
           <Captions className="size-3.5" />
@@ -55,7 +59,8 @@ export function WindowControls({ t }: WindowControlsProps) {
     if (!appWindow) {
       return;
     }
-    const syncMaximized = async () => setIsMaximized(await appWindow.isMaximized());
+    const syncMaximized = async () =>
+      setIsMaximized(await appWindow.isMaximized());
     void syncMaximized();
     const unlisten = appWindow.onResized(syncMaximized);
     return () => {
@@ -64,7 +69,11 @@ export function WindowControls({ t }: WindowControlsProps) {
   }, []);
 
   return (
-    <div className="flex items-center" role="group" aria-label={t("windowControls")}>
+    <div
+      className="flex items-center"
+      role="group"
+      aria-label={t("windowControls")}
+    >
       <Button
         variant="ghost"
         size="icon"
@@ -81,7 +90,11 @@ export function WindowControls({ t }: WindowControlsProps) {
         aria-label={t(isMaximized ? "restoreWindow" : "maximizeWindow")}
         onClick={() => appWindow?.toggleMaximize()}
       >
-        {isMaximized ? <Copy className="size-3.5" /> : <Square className="size-3.5" />}
+        {isMaximized ? (
+          <Copy className="size-3.5" />
+        ) : (
+          <Square className="size-3.5" />
+        )}
       </Button>
       <Button
         variant="ghost"

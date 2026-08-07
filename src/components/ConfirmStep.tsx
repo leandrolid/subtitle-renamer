@@ -46,7 +46,7 @@ export function ConfirmStep({
   const showEmptyForFailure = phase === "execution-failure";
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 py-8">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 py-8 cursor-default select-none">
       {showEmptyForFailure && (
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

@@ -25,7 +25,7 @@ export function ChooseStep({
   const isScanning = phase === "scanning" || phase === "selecting";
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 py-10 text-center">
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 py-10 text-center cursor-default select-none">
       <div className="space-y-2">
         <h2 className="text-balance text-2xl font-semibold tracking-tight">
           {t("chooseTitle")}
