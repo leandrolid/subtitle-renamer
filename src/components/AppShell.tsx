@@ -61,7 +61,7 @@ export function AppShell({
 
   return (
     <div
-      className="flex min-h-dvh flex-col bg-background text-foreground"
+      className="flex h-dvh flex-col bg-background text-foreground overflow-hidden"
       aria-busy={busy ? "true" : "false"}
     >
       <TitleBar
