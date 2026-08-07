@@ -10,8 +10,6 @@ on:
   push:
     tags:
       - "v*"
-    branches:
-      - "main"
 
 permissions:
   contents: read
@@ -281,15 +279,7 @@ jobs:
   release:
     name: Publish GitHub Release
     if: needs.prepare.outputs.publish == 'true'
-    needs:
-      [
-        prepare,
-        smoke-windows-nsis,
-        smoke-windows-cli,
-        smoke-linux-deb,
-        smoke-linux-appimage,
-        smoke-linux-cli,
-      ]
+    needs: [prepare, smoke-windows-nsis, smoke-windows-cli, smoke-linux-deb, smoke-linux-appimage, smoke-linux-cli]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
