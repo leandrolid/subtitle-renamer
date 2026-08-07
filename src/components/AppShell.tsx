@@ -1,10 +1,10 @@
-import type { AppState, Phase, Theme, Locale } from '../types.ts';
-import { TitleBar } from './TitleBar.tsx';
-import { ProgressTracker } from './ProgressTracker.tsx';
-import { SettingsMenu } from './SettingsMenu.tsx';
-import { ChooseStep } from './ChooseStep.tsx';
-import { ReviewStep } from './ReviewStep.tsx';
-import { ConfirmStep } from './ConfirmStep.tsx';
+import type { AppState, Locale, Phase, Theme } from "../types.ts";
+import { ChooseStep } from "./ChooseStep.tsx";
+import { ConfirmStep } from "./ConfirmStep.tsx";
+import { ProgressTracker } from "./ProgressTracker.tsx";
+import { ReviewStep } from "./ReviewStep.tsx";
+import { SettingsMenu } from "./SettingsMenu.tsx";
+import { TitleBar } from "./TitleBar.tsx";
 
 interface Props {
   state: AppState;
@@ -26,32 +26,42 @@ interface Props {
 }
 
 export function AppShell({
-  state, statusMsg, t, tp,
-  onSelectFolder, onBack, onStartOver,
-  onContinue, onConfirmCopy,
-  onSetTheme, onSetLocale,
+  state,
+  statusMsg,
+  t,
+  tp,
+  onSelectFolder,
+  onBack,
+  onStartOver,
+  onContinue,
+  onConfirmCopy,
+  onSetTheme,
+  onSetLocale,
 }: Props) {
-  const { phase, visibleStep, currentPlan, currentSnapshot, currentOutcome } = state;
-  const busy = phase === 'selecting' || phase === 'scanning' || phase === 'executing';
+  const { phase, visibleStep, currentPlan, currentSnapshot, currentOutcome } =
+    state;
+  const busy =
+    phase === "selecting" || phase === "scanning" || phase === "executing";
   const hasPlan = Boolean(currentPlan?.planId);
   const canExecute = Boolean(currentPlan?.planId && currentPlan.canExecute);
   const hasOutcome = Boolean(currentOutcome);
   const copies = currentSnapshot?.copies ?? [];
-  const skips  = currentSnapshot?.skips  ?? [];
+  const skips = currentSnapshot?.skips ?? [];
 
-  const backDisabled      = busy || visibleStep === 'choose-folder' || hasOutcome;
+  const backDisabled = busy || visibleStep === "choose-folder" || hasOutcome;
   const startOverDisabled = busy || (!hasPlan && !hasOutcome);
-  const confirmDisabled   = busy || visibleStep !== 'confirm-copy' || hasOutcome || !canExecute;
-  const continueDisabled  = busy || !canExecute;
+  const confirmDisabled =
+    busy || visibleStep !== "confirm-copy" || hasOutcome || !canExecute;
+  const continueDisabled = busy || !canExecute;
 
   return (
     <div
       className="flex min-h-dvh flex-col bg-background text-foreground"
-      aria-busy={busy ? 'true' : 'false'}
+      aria-busy={busy ? "true" : "false"}
     >
       <TitleBar
-        title={t('appTitle')}
-        rightSlot={
+        title={t("appTitle")}
+        leftSlot={
           <SettingsMenu
             t={t}
             locale={state.locale}
@@ -66,8 +76,8 @@ export function AppShell({
 
       <div
         className="sr-only"
-        aria-live={state.status.isAlert ? 'assertive' : 'polite'}
-        role={state.status.isAlert ? 'alert' : undefined}
+        aria-live={state.status.isAlert ? "assertive" : "polite"}
+        role={state.status.isAlert ? "alert" : undefined}
       >
         {statusMsg}
       </div>
@@ -89,7 +99,7 @@ export function AppShell({
           copies={copies}
           skips={skips}
           locale={state.locale}
-          directoryLabel={currentSnapshot?.directoryLabel ?? ''}
+          directoryLabel={currentSnapshot?.directoryLabel ?? ""}
           onBack={onBack}
           onContinue={onContinue}
           continueDisabled={continueDisabled}
