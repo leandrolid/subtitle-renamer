@@ -54,7 +54,11 @@ fn help_shows_public_contract_when_requested() {
     // Then: clap exits successfully and documents the public contract
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
-    assert!(text.contains("Usage: subtitle-renamer [DIR]"), "{text}");
+    assert!(
+        text.contains("Usage: subtitle-renamer [DIR]")
+            || text.contains("Usage: subtitle-renamer.exe [DIR]"),
+        "{text}"
+    );
     assert!(text.contains("--help"), "{text}");
     assert!(text.contains("--version"), "{text}");
     assert!(text.contains("mkv, mp4, avi, mov, m4v, webm"), "{text}");
@@ -118,7 +122,11 @@ fn invalid_argument_exits_two_with_usage_on_stderr() {
     assert_eq!(output.status.code(), Some(2));
     assert!(stdout(&output).is_empty());
     let text = stderr(&output);
-    assert!(text.contains("Usage: subtitle-renamer [DIR]"), "{text}");
+    assert!(
+        text.contains("Usage: subtitle-renamer [DIR]")
+            || text.contains("Usage: subtitle-renamer.exe [DIR]"),
+        "{text}"
+    );
     assert!(text.contains("--unknown"), "{text}");
 }
 
