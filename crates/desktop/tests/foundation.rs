@@ -49,6 +49,7 @@ fn validate_config(raw: &str) -> Result<(), String> {
         || window.min_width != Some(720.0)
         || window.min_height != Some(520.0)
         || !window.resizable
+        || window.decorations
     {
         return Err("main window contract changed".into());
     }
@@ -138,6 +139,7 @@ fn validate_config(raw: &str) -> Result<(), String> {
                 "minWidth",
                 "minHeight",
                 "resizable",
+                "decorations",
             ],
         )
         || !has_exact_keys(bundle.keys(), &["active", "targets", "icon", "windows"])
@@ -170,8 +172,19 @@ fn validate_capability(raw: &str) -> Result<(), String> {
         || value["description"] != "Base capability for the main window."
         || value["windows"].as_array().map(Vec::len) != Some(1)
         || value["windows"][0] != "main"
-        || value["permissions"].as_array().map(Vec::len) != Some(1)
-        || value["permissions"][0] != "core:default"
+        || value["permissions"].as_array().map(|permissions| {
+            permissions
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .collect::<Vec<_>>()
+        }) != Some(vec![
+            "core:default",
+            "core:window:allow-close",
+            "core:window:allow-is-maximized",
+            "core:window:allow-minimize",
+            "core:window:allow-start-dragging",
+            "core:window:allow-toggle-maximize",
+        ])
     {
         return Err("capability policy changed".into());
     }
@@ -198,12 +211,12 @@ fn desktop_configuration_matches_the_locked_policy() {
 }
 
 #[test]
-fn default_capability_grants_only_core_to_main() {
+fn default_capability_grants_only_required_window_controls_to_main() {
     // Given: the source default capability.
     // When: its window and permission scope is parsed.
     let result = validate_capability(CAPABILITY);
 
-    // Then: no filesystem, shell, dialog, HTTP, opener, or asset scope exists.
+    // Then: only core and the custom title bar's window controls are available.
     assert_eq!(result, Ok(()));
 }
 

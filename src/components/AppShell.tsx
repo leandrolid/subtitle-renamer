@@ -4,7 +4,7 @@ import { ConfirmStep } from "./ConfirmStep.tsx";
 import { ProgressTracker } from "./ProgressTracker.tsx";
 import { ReviewStep } from "./ReviewStep.tsx";
 import { SettingsMenu } from "./SettingsMenu.tsx";
-import { TitleBar } from "./TitleBar.tsx";
+import { TitleBar, WindowControls } from "./TitleBar.tsx";
 
 interface Props {
   state: AppState;
@@ -75,6 +75,7 @@ export function AppShell({
             onSetLocale={onSetLocale}
           />
         }
+        rightSlot={<WindowControls t={t} />}
       />
 
       <ProgressTracker visibleStep={visibleStep} t={t} />

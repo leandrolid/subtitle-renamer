@@ -85,7 +85,7 @@ The shell is centered in the window. Step 1 and step 3 use a centered compositio
 
 ## 5. Components
 
-Top app bar: compact local chrome containing the app icon, `Subtitle Renamer` identity, current helper copy, and a top-right Settings menu trigger. The bar uses surface/app-bar tokens, one bottom border, and no shadow.
+Top app bar: compact local chrome containing the app icon, `Subtitle Renamer` identity, Settings menu trigger, and custom minimize, maximize/restore, and close controls. Empty bar space drags the undecorated window and double-clicking it toggles maximization. The bar uses surface/app-bar tokens, one bottom border, and no shadow.
 
 Progress stepper: a non-clickable three-step progress stepper with connector lines. Current step uses `--color-action`; completed steps use the same action role plus text or an SVG check; future steps use neutral status and border roles. Each step exposes localized title and subtitle text.
 
