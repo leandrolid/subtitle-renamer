@@ -15,7 +15,7 @@ export function TitleBar({ title, rightSlot, leftSlot }: Props) {
 
   return (
     <header
-      className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-card py-2.5 cursor-default select-none"
+      className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-card p-1.5 cursor-default select-none"
       onMouseDown={async (event) => {
         if (
           event.button !== 0 ||
@@ -32,11 +32,9 @@ export function TitleBar({ title, rightSlot, leftSlot }: Props) {
         }
       }}
     >
-      <div className="flex items-center justify-self-start pl-4">
-        {leftSlot}
-      </div>
+      <div className="flex items-center justify-self-start">{leftSlot}</div>
       <div className="flex items-center gap-2">
-        <div className="flex size-6 items-center justify-center rounded-md bg-brand text-brand-foreground">
+        <div className="flex size-5 items-center justify-center rounded-sm bg-brand text-brand-foreground">
           <Captions className="size-3.5" />
           <img src={appIconSrc} className="sr-only" alt="" />
         </div>
