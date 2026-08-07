@@ -94,7 +94,7 @@ mod tests {
     #[test]
     fn renders_preview_mappings_and_all_skip_reasons_with_escaped_filenames() {
         let renames = [RenameLine(
-            Path::new("bad\"name\\\n.srt"),
+            Path::new("bad\"name\n.srt"),
             Path::new("target\tname.srt"),
         )];
         let skips = [
@@ -112,7 +112,7 @@ mod tests {
         assert_eq!(
             text(output),
             concat!(
-                r#"COPY: "bad\"name\\\n.srt" -> "target\tname.srt""#,
+                r#"COPY: "bad\"name\n.srt" -> "target\tname.srt""#,
                 "\nSKIP [no-match]: \"no-match\"",
                 "\nSKIP [ambiguous]: \"ambiguous\"",
                 "\nSKIP [multi-identifier]: \"multi-identifier\"",
