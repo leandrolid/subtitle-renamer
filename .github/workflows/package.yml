@@ -27,6 +27,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+      - name: Fetch tags
+        run: git fetch --tags --force
       - name: Self-test metadata script
         run: bash .github/scripts/release-metadata.sh --self-test
       - name: Extract and validate release metadata
