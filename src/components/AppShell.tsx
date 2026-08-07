@@ -1,10 +1,10 @@
-import type { Phase, AppState, Theme, Locale } from "../types.ts";
-import appIconSrc from "../app-icon.svg";
-import { ProgressTracker } from "./ProgressTracker.tsx";
-import { SettingsMenu } from "./SettingsMenu.tsx";
-import { ChooseStep } from "./ChooseStep.tsx";
-import { ReviewStep } from "./ReviewStep.tsx";
-import { ConfirmStep } from "./ConfirmStep.tsx";
+import type { AppState, Phase, Theme, Locale } from '../types.ts';
+import { TitleBar } from './TitleBar.tsx';
+import { ProgressTracker } from './ProgressTracker.tsx';
+import { SettingsMenu } from './SettingsMenu.tsx';
+import { ChooseStep } from './ChooseStep.tsx';
+import { ReviewStep } from './ReviewStep.tsx';
+import { ConfirmStep } from './ConfirmStep.tsx';
 
 interface Props {
   state: AppState;
@@ -26,114 +26,53 @@ interface Props {
 }
 
 export function AppShell({
-  state,
-  cssPhaseValue,
-  statusMsg,
-  t,
-  tp,
-  onSelectFolder,
-  onRescan,
-  onReviewPlan,
-  onBack,
-  onStartOver,
-  onContinue,
-  onConfirmCopy,
-  onCancelCopy,
-  onSetTheme,
-  onSetLocale,
+  state, statusMsg, t, tp,
+  onSelectFolder, onBack, onStartOver,
+  onContinue, onConfirmCopy,
+  onSetTheme, onSetLocale,
 }: Props) {
   const { phase, visibleStep, currentPlan, currentSnapshot, currentOutcome } = state;
-  const busy = phase === "selecting" || phase === "scanning" || phase === "executing";
+  const busy = phase === 'selecting' || phase === 'scanning' || phase === 'executing';
   const hasPlan = Boolean(currentPlan?.planId);
   const canExecute = Boolean(currentPlan?.planId && currentPlan.canExecute);
   const hasOutcome = Boolean(currentOutcome);
-
   const copies = currentSnapshot?.copies ?? [];
-  const skips = currentSnapshot?.skips ?? [];
+  const skips  = currentSnapshot?.skips  ?? [];
 
-  // Button disabled states
-  const buttons = {
-    select: busy,
-    rescan: busy || !state.selectedDirectoryLabel,
-    review: busy || !hasPlan || visibleStep === "review-plan",
-    back: busy || visibleStep === "choose-folder" || hasOutcome,
-    startOver: busy || (!hasPlan && !hasOutcome),
-    copy:
-      busy ||
-      hasOutcome ||
-      (visibleStep !== "review-plan" && visibleStep !== "confirm-copy") ||
-      !canExecute,
-    confirm: busy || visibleStep !== "confirm-copy" || hasOutcome || !canExecute,
-    cancel: busy || (!hasPlan && !hasOutcome),
-  };
-
-  // Action bar visibility
-  const showActionBar =
-    visibleStep === "review-plan" ||
-    visibleStep === "confirm-copy" ||
-    (visibleStep === "choose-folder" && hasPlan);
-
-  // Copy button label
-  let copyBtnLabel: string;
-  if (visibleStep === "review-plan") {
-    copyBtnLabel = t("continue");
-  } else if (visibleStep === "confirm-copy" && canExecute) {
-    copyBtnLabel = tp("copyButtonSubtitles", copies.length);
-  } else {
-    copyBtnLabel = t("copySubtitles");
-  }
-
-  // Confirm-step layout tweaks via data attributes handled by CSS
-  const confirmStepActive = visibleStep === "confirm-copy";
+  const backDisabled      = busy || visibleStep === 'choose-folder' || hasOutcome;
+  const startOverDisabled = busy || (!hasPlan && !hasOutcome);
+  const confirmDisabled   = busy || visibleStep !== 'confirm-copy' || hasOutcome || !canExecute;
+  const continueDisabled  = busy || !canExecute;
 
   return (
     <div
-      className="shell"
-      data-phase={cssPhaseValue}
-      data-visible-step={visibleStep}
-      data-has-plan={String(hasPlan)}
-      aria-busy={busy ? "true" : "false"}
+      className="flex min-h-dvh flex-col bg-background text-foreground"
+      aria-busy={busy ? 'true' : 'false'}
     >
-      {/* Header */}
-      <header className="shell__header" role="banner">
-        <div className="shell__brand">
-          <img className="shell__icon" src={appIconSrc} width={24} height={24} alt="" />
-          <div className="shell__title-group">
-            <p className="eyebrow">{t("localCopyPlanner")}</p>
-            <h1>{t("appTitle")}</h1>
-          </div>
-        </div>
-        <p className="lede">{t("lede")}</p>
-        <SettingsMenu
-          t={t}
-          locale={state.locale}
-          themePreference={state.themePreference}
-          onSetTheme={onSetTheme}
-          onSetLocale={onSetLocale}
-        />
-      </header>
+      <TitleBar
+        title={t('appTitle')}
+        rightSlot={
+          <SettingsMenu
+            t={t}
+            locale={state.locale}
+            themePreference={state.themePreference}
+            onSetTheme={onSetTheme}
+            onSetLocale={onSetLocale}
+          />
+        }
+      />
 
-      {/* Progress tracker */}
       <ProgressTracker visibleStep={visibleStep} t={t} />
 
-      {/* Main content */}
-      <main className="shell__main" id="main-content">
-        {/* Status (aria-live) */}
-        <section
-          className="status-line"
-          aria-label={t("statusRegionLabel")}
-        >
-          <strong>{t("statusLabel")}</strong>
-          <p
-            id="status-message"
-            aria-live={state.status.isAlert ? "assertive" : "polite"}
-            role={state.status.isAlert ? "alert" : undefined}
-          >
-            {statusMsg}
-          </p>
-        </section>
+      <div
+        className="sr-only"
+        aria-live={state.status.isAlert ? 'assertive' : 'polite'}
+        role={state.status.isAlert ? 'alert' : undefined}
+      >
+        {statusMsg}
+      </div>
 
-        {/* Choose folder step */}
+      <main className="flex-1 overflow-y-auto px-6" id="main-content">
         <ChooseStep
           t={t}
           phase={phase}
@@ -141,20 +80,22 @@ export function AppShell({
           selectedDirectoryLabel={state.selectedDirectoryLabel}
           emptyState={state.emptyState}
           onSelectFolder={onSelectFolder}
-          selectDisabled={buttons.select}
+          selectDisabled={busy}
         />
 
-        {/* Review plan step */}
         <ReviewStep
           t={t}
           visibleStep={visibleStep}
           copies={copies}
           skips={skips}
           locale={state.locale}
-          directoryLabel={currentSnapshot?.directoryLabel ?? ""}
+          directoryLabel={currentSnapshot?.directoryLabel ?? ''}
+          onBack={onBack}
+          onContinue={onContinue}
+          continueDisabled={continueDisabled}
+          backDisabled={backDisabled}
         />
 
-        {/* Confirm / outcomes step */}
         <ConfirmStep
           t={t}
           tp={tp}
@@ -163,64 +104,15 @@ export function AppShell({
           copies={copies}
           outcome={currentOutcome}
           canExecute={canExecute}
-          confirmDisabled={buttons.confirm}
-          cancelDisabled={buttons.cancel}
+          onBack={onBack}
+          onStartOver={onStartOver}
           onConfirmCopy={onConfirmCopy}
-          onCancelCopy={onCancelCopy}
+          backDisabled={backDisabled}
+          startOverDisabled={startOverDisabled}
+          confirmDisabled={confirmDisabled}
           locale={state.locale}
         />
       </main>
-
-      {/* Action bar footer */}
-      {showActionBar && (
-        <footer className="action-bar" aria-label={t("actionsLabel")}>
-          <button
-            className="button button--secondary"
-            type="button"
-            onClick={onRescan}
-            disabled={buttons.rescan}
-          >
-            {t("rescan")}
-          </button>
-          {visibleStep === "choose-folder" && hasPlan && (
-            <button
-              className="button button--secondary"
-              type="button"
-              onClick={onReviewPlan}
-              disabled={buttons.review}
-            >
-              {t("reviewCurrentPlan")}
-            </button>
-          )}
-          {(visibleStep === "review-plan" || (confirmStepActive && !hasOutcome)) && (
-            <button
-              className="button button--secondary"
-              type="button"
-              onClick={onBack}
-              disabled={buttons.back}
-              data-action="back"
-            >
-              {t("back")}
-            </button>
-          )}
-          <button
-            className="button button--secondary"
-            type="button"
-            onClick={onStartOver}
-            disabled={buttons.startOver}
-          >
-            {t("startOver")}
-          </button>
-          <button
-            className="button button--primary"
-            type="button"
-            onClick={onContinue}
-            disabled={buttons.copy}
-          >
-            {copyBtnLabel}
-          </button>
-        </footer>
-      )}
     </div>
   );
 }

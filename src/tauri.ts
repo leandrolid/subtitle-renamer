@@ -7,7 +7,16 @@ export interface TauriError {
   message?: string;
 }
 
+declare global {
+  interface Window {
+    __devMockPlan?: unknown;
+  }
+}
+
 export function invokeCommand<T>(command: string, payload?: Record<string, unknown>): Promise<T> {
+  if (import.meta.env.DEV && command === "select_and_plan" && window.__devMockPlan) {
+    return Promise.resolve(window.__devMockPlan as T);
+  }
   if (payload === undefined) {
     return tauriInvoke<T>(command);
   }

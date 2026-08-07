@@ -1,5 +1,7 @@
-import type { VisibleStep, Phase, CopyRow, Outcome, Locale } from "../types.ts";
-import { getErrorLabel } from "../i18n.ts";
+import { ChevronLeft, Copy, Captions, FolderInput, ShieldCheck } from 'lucide-react';
+import { Button } from './ui/button.tsx';
+import { getErrorLabel } from '../i18n.ts';
+import type { VisibleStep, Phase, CopyRow, Outcome, Locale } from '../types.ts';
 
 interface Props {
   t: (key: string) => string;
@@ -9,167 +11,174 @@ interface Props {
   copies: CopyRow[];
   outcome: Outcome | null;
   canExecute: boolean;
-  confirmDisabled: boolean;
-  cancelDisabled: boolean;
+  onBack: () => void;
+  onStartOver: () => void;
   onConfirmCopy: () => void;
-  onCancelCopy: () => void;
+  backDisabled: boolean;
+  startOverDisabled: boolean;
+  confirmDisabled: boolean;
   locale: Locale;
 }
 
 export function ConfirmStep({
-  t,
-  tp,
-  visibleStep,
-  phase,
-  copies,
-  outcome,
-  canExecute,
-  confirmDisabled,
-  cancelDisabled,
-  onConfirmCopy,
-  onCancelCopy,
-  locale,
+  t, tp, visibleStep, phase, copies, outcome,
+  canExecute, onBack, onStartOver, onConfirmCopy,
+  backDisabled, startOverDisabled, confirmDisabled, locale,
 }: Props) {
-  const isVisible = visibleStep === "confirm-copy";
-  const showEmptyForFailure = phase === "execution-failure";
-
-  if (!isVisible) return null;
+  if (visibleStep !== 'confirm-copy') return null;
+  const showEmptyForFailure = phase === 'execution-failure';
 
   return (
-    <section
-      className="workflow workflow--confirm"
-      aria-label={t("confirmCopyLabel")}
-      data-workflow-region="confirm-copy"
-    >
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 py-8">
       {showEmptyForFailure && (
-        <section className="empty-state" aria-labelledby="empty-exec-title">
-          <p className="eyebrow">{t("noPlanLoaded")}</p>
-          <h2 id="empty-exec-title">{t("emptyCopyDidNotRunTitle")}</h2>
-          <p>{t("emptyCopyDidNotRunBody")}</p>
-        </section>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('noPlanLoaded')}</p>
+          <h3 className="text-sm font-medium">{t('emptyCopyDidNotRunTitle')}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t('emptyCopyDidNotRunBody')}</p>
+        </div>
       )}
 
       {!showEmptyForFailure && !outcome && (
-        <section className="confirmation" aria-labelledby="confirm-title">
-          <div className="step-intro">
-            <span className="confirm-icon" aria-hidden="true" />
-            <p className="eyebrow">{t("confirm")}</p>
-            <h2 id="confirm-title">{t("copyPlannedSubtitles")}</h2>
-            <p>{tp("confirmCopyCount", copies.length)}</p>
-            <p>{t("confirmBody")}</p>
+        <>
+          <div className="space-y-2 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-muted text-brand">
+              <Copy className="size-6" />
+            </div>
+            <h2 className="text-xl font-semibold tracking-tight">{t('copyPlannedSubtitles')}</h2>
+            <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+              {tp('confirmCopyCount', copies.length)}
+            </p>
           </div>
 
-          <ol className="file-list">
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
             {copies.map((row, i) => (
-              <li key={i}>
-                <bdi>{row.targetLabel ?? t("unknownTarget")}</bdi>
+              <li key={i} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
+                <Captions className="size-4 shrink-0 text-brand" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-mono text-sm">{row.targetLabel ?? t('unknownTarget')}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+                  new
+                </span>
               </li>
             ))}
-          </ol>
+          </ul>
 
-          <div className="safety-cards">
-            <article className="safety-card">
-              <h3>{t("copyNotMoveTitle")}</h3>
-              <p>{t("copyNotMoveBody")}</p>
-            </article>
-            <article className="safety-card">
-              <h3>{t("safeDefaultTitle")}</h3>
-              <p>{t("safeDefaultBody")}</p>
-            </article>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3">
+              <FolderInput className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{t('copyNotMoveTitle')}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{t('copyNotMoveBody')}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3">
+              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{t('safeDefaultTitle')}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{t('safeDefaultBody')}</p>
+              </div>
+            </div>
           </div>
 
-          {canExecute && (
-            <div className="inline-actions">
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={onConfirmCopy}
-                disabled={confirmDisabled}
-              >
-                {t("yesCopy")}
-              </button>
-              <button
-                className="button button--secondary"
-                type="button"
-                onClick={onCancelCopy}
-                disabled={cancelDisabled}
-              >
-                {t("startOver")}
-              </button>
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" onClick={onBack} disabled={backDisabled} className="gap-1.5">
+              <ChevronLeft className="size-4" />
+              {t('back')}
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={onStartOver} disabled={startOverDisabled}>
+                {t('startOver')}
+              </Button>
+              {canExecute && (
+                <Button variant="brand" onClick={onConfirmCopy} disabled={confirmDisabled} className="gap-1.5">
+                  <Copy className="size-4" />
+                  {tp('copyButtonSubtitles', copies.length)}
+                </Button>
+              )}
             </div>
-          )}
-        </section>
+          </div>
+        </>
       )}
 
       {!showEmptyForFailure && outcome && (
-        <OutcomeGroups t={t} outcome={outcome} locale={locale} />
+        <OutcomeGroups t={t} outcome={outcome} locale={locale} onStartOver={onStartOver} startOverDisabled={startOverDisabled} />
       )}
-    </section>
+    </div>
   );
 }
 
-function OutcomeGroups({
-  t,
-  outcome,
-  locale,
-}: {
+function OutcomeGroups({ t, outcome, locale, onStartOver, startOverDisabled }: {
   t: (key: string) => string;
   outcome: Outcome;
   locale: Locale;
+  onStartOver: () => void;
+  startOverDisabled: boolean;
 }) {
   return (
-    <section className="outcomes" aria-label={t("outcomesLabel")}>
+    <div className="flex flex-col gap-4" aria-label={t('outcomesLabel')}>
       {outcome.completed.length > 0 && (
-        <section className="panel" aria-labelledby="completed-title">
-          <p className="eyebrow">{t("completed")}</p>
-          <h2 id="completed-title">{t("copiedFiles")}</h2>
-          <ol className="file-list">
+        <section aria-labelledby="completed-title">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('completed')}</p>
+          <h3 id="completed-title" className="mb-2 text-sm font-medium">{t('copiedFiles')}</h3>
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
             {outcome.completed.map((row, i) => (
-              <li key={i}>
-                <bdi>{row.sourceLabel ?? ""}</bdi>
-                <span> → </span>
-                <bdi>{row.targetLabel ?? ""}</bdi>
+              <li key={i} className="flex items-center gap-2 border-b border-border px-4 py-3 last:border-b-0">
+                <Captions className="size-4 shrink-0 text-emerald-400" />
+                <span className="min-w-0 font-mono text-sm">
+                  <bdi>{row.sourceLabel ?? ''}</bdi>
+                  <span className="mx-1 text-muted-foreground">→</span>
+                  <bdi>{row.targetLabel ?? ''}</bdi>
+                </span>
               </li>
             ))}
-          </ol>
+          </ul>
         </section>
       )}
 
       {outcome.failed.length > 0 && (
-        <section className="panel" aria-labelledby="failed-title">
-          <p className="eyebrow">{t("failed")}</p>
-          <h2 id="failed-title">{t("failedFile")}</h2>
-          <ol className="file-list">
+        <section aria-labelledby="failed-title">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('failed')}</p>
+          <h3 id="failed-title" className="mb-2 text-sm font-medium">{t('failedFile')}</h3>
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
             {outcome.failed.map((row, i) => (
-              <li key={i}>
-                <bdi>{row.sourceLabel ?? ""}</bdi>
-                <span> → </span>
-                <bdi>{row.targetLabel ?? ""}</bdi>
-                <p>
-                  {getErrorLabel(locale, String(row.code ?? row.errorCode ?? row.kind ?? ""))}
-                  {row.partialTargetMayRemain ? ` ${t("partialTargetMayRemain")}` : ""}
-                </p>
+              <li key={i} className="flex flex-col gap-0.5 border-b border-border px-4 py-3 last:border-b-0">
+                <span className="font-mono text-sm">
+                  <bdi>{row.sourceLabel ?? ''}</bdi>
+                  <span className="mx-1 text-muted-foreground">→</span>
+                  <bdi>{row.targetLabel ?? ''}</bdi>
+                </span>
+                <span className="text-xs text-destructive">
+                  {getErrorLabel(locale, String(row.code ?? row.errorCode ?? row.kind ?? ''))}
+                  {row.partialTargetMayRemain ? ` ${t('partialTargetMayRemain')}` : ''}
+                </span>
               </li>
             ))}
-          </ol>
+          </ul>
         </section>
       )}
 
       {outcome.pending.length > 0 && (
-        <section className="panel" aria-labelledby="pending-title">
-          <p className="eyebrow">{t("pending")}</p>
-          <h2 id="pending-title">{t("pendingAfterFailure")}</h2>
-          <ol className="file-list">
+        <section aria-labelledby="pending-title">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('pending')}</p>
+          <h3 id="pending-title" className="mb-2 text-sm font-medium">{t('pendingAfterFailure')}</h3>
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
             {outcome.pending.map((row, i) => (
-              <li key={i}>
-                <bdi>{row.sourceLabel ?? ""}</bdi>
-                <span> → </span>
-                <bdi>{row.targetLabel ?? ""}</bdi>
+              <li key={i} className="flex items-center gap-2 border-b border-border px-4 py-3 last:border-b-0 font-mono text-sm">
+                <bdi>{row.sourceLabel ?? ''}</bdi>
+                <span className="mx-1 text-muted-foreground">→</span>
+                <bdi>{row.targetLabel ?? ''}</bdi>
               </li>
             ))}
-          </ol>
+          </ul>
         </section>
       )}
-    </section>
+
+      <div className="flex justify-end pt-2">
+        <Button variant="outline" onClick={onStartOver} disabled={startOverDisabled}>
+          {t('startOver')}
+        </Button>
+      </div>
+    </div>
   );
 }

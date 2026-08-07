@@ -45,6 +45,16 @@ function buildInitialState(): AppState {
   const localePreference = loadLocalePreference();
   const locale: Locale = localePreference ?? systemLocale();
   const themePreference = loadThemePreference();
+  let initialSystemTheme: "light" | "dark" = "light";
+  try {
+    if (typeof window.matchMedia === "function") {
+      initialSystemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+  } catch {
+    initialSystemTheme = "light";
+  }
   return {
     phase: "idle",
     visibleStep: "choose-folder",
@@ -57,7 +67,7 @@ function buildInitialState(): AppState {
     locale,
     localePreference,
     themePreference,
-    systemTheme: "light",
+    systemTheme: initialSystemTheme,
     status: { key: "statusWaiting", vars: {}, isAlert: false },
     emptyState: { titleKey: "emptyReadyTitle", bodyKey: "emptyReadyBody" },
   };

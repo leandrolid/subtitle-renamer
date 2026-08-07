@@ -32,7 +32,7 @@ export function loadThemePreference(): Theme {
   const stored = readStorage(STORAGE_KEY_THEME);
   if (stored === "system" || stored === "light" || stored === "dark") return stored;
   if (stored !== null) removeStorage(STORAGE_KEY_THEME);
-  return "system";
+  return "dark";
 }
 
 export function saveThemePreference(theme: Theme): void {

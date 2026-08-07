@@ -1,4 +1,6 @@
-import type { Phase, VisibleStep, EmptyStateContent } from "../types.ts";
+import { FolderOpen, HardDrive, Film, Captions } from 'lucide-react';
+import { Button } from './ui/button.tsx';
+import type { Phase, VisibleStep, EmptyStateContent } from '../types.ts';
 
 interface Props {
   t: (key: string) => string;
@@ -10,86 +12,80 @@ interface Props {
   selectDisabled: boolean;
 }
 
-export function ChooseStep({
-  t,
-  phase,
-  visibleStep,
-  selectedDirectoryLabel,
-  emptyState,
-  onSelectFolder,
-  selectDisabled,
-}: Props) {
-  const isVisible = visibleStep === "choose-folder";
+export function ChooseStep({ t, phase, visibleStep, selectedDirectoryLabel, emptyState, onSelectFolder, selectDisabled }: Props) {
+  if (visibleStep !== 'choose-folder') return null;
+  const isScanning = phase === 'scanning' || phase === 'selecting';
 
   return (
-    <section
-      className="workflow workflow--choose"
-      aria-labelledby="folder-title"
-      data-workflow-region="choose-folder"
-      data-selected-folder-area
-      style={{ display: isVisible ? undefined : "none" }}
-    >
-      <div className="step-intro">
-        <p className="eyebrow">{t("selectedFolder")}</p>
-        <h2 id="folder-title">{t("chooseTitle")}</h2>
-        <p>{t("chooseBody")}</p>
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 py-10 text-center">
+      <div className="space-y-2">
+        <h2 className="text-balance text-2xl font-semibold tracking-tight">
+          {t('chooseTitle')}
+        </h2>
+        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+          {t('chooseBody')}
+        </p>
       </div>
 
       <button
-        className="folder-surface"
         type="button"
         onClick={onSelectFolder}
         disabled={selectDisabled}
+        className="group flex w-full flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 transition-colors hover:border-brand hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span className="folder-surface__icon" aria-hidden="true" />
-        <span className="folder-surface__title">{t("selectFolder")}</span>
-        <span className="folder-surface__body">{t("folderSurfaceBody")}</span>
+        <span className="flex size-14 items-center justify-center rounded-full bg-brand-muted text-brand transition-transform group-hover:scale-105">
+          <FolderOpen className="size-7" />
+        </span>
+        <span className="space-y-1">
+          <span className="block text-sm font-medium">{t('selectFolder')}</span>
+          <span className="block text-xs text-muted-foreground">{t('folderSurfaceBody')}</span>
+        </span>
       </button>
 
-      <p className="folder-path" data-folder-label>
-        <bdi>
-          {selectedDirectoryLabel || t("noFolderSelected")}
-        </bdi>
-      </p>
+      {selectedDirectoryLabel && (
+        <div className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left">
+          <HardDrive className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate font-mono text-sm text-muted-foreground">{selectedDirectoryLabel}</span>
+          <span className="ml-auto shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
+            {t('lastUsed') || 'last used'}
+          </span>
+        </div>
+      )}
 
-      <p className="hint">{t("folderHint")}</p>
-
-      <div className="extension-cards" aria-label={t("supportedFilesLabel")}>
-        <article className="extension-card">
-          <h3>{t("videoFiles")}</h3>
-          <p>mkv, mp4, avi, mov, m4v, webm</p>
-        </article>
-        <article className="extension-card">
-          <h3>{t("subtitleFiles")}</h3>
-          <p>ass, ssa, srt, vtt</p>
-        </article>
+      <div className="grid w-full grid-cols-2 gap-3">
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left">
+          <Film className="size-4 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">{t('videoFiles')}</p>
+            <p className="text-xs text-muted-foreground">.mkv .mp4 .avi</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left">
+          <Captions className="size-4 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">{t('subtitleFiles')}</p>
+            <p className="text-xs text-muted-foreground">.srt .ass .vtt</p>
+          </div>
+        </div>
       </div>
 
-      <button
-        className="button button--primary button--wide"
-        type="button"
+      <Button
+        variant="brand"
+        size="xl"
         onClick={onSelectFolder}
-        disabled={selectDisabled || phase === "scanning" || phase === "selecting"}
+        disabled={selectDisabled || isScanning}
+        className="w-full"
       >
-        {t("scanFolder")}
-      </button>
+        {isScanning ? t('statusScanning') || 'Scanning…' : t('scanFolder')}
+      </Button>
 
-      {/* Empty state */}
-      <section
-        className="empty-state"
-        aria-labelledby="empty-title"
-        hidden={
-          isVisible &&
-          phase === "idle" &&
-          !selectedDirectoryLabel
-            ? true
-            : false
-        }
-      >
-        <p className="eyebrow">{t("noPlanLoaded")}</p>
-        <h2 id="empty-title">{t(emptyState.titleKey)}</h2>
-        <p>{t(emptyState.bodyKey)}</p>
-      </section>
-    </section>
+      {!(phase === 'idle' && !selectedDirectoryLabel) && (
+        <section className="w-full rounded-xl border border-border bg-card p-4 text-left" aria-labelledby="empty-title">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('noPlanLoaded')}</p>
+          <h3 id="empty-title" className="text-sm font-medium">{t(emptyState.titleKey)}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t(emptyState.bodyKey)}</p>
+        </section>
+      )}
+    </div>
   );
 }
