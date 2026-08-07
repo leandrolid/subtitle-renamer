@@ -86,7 +86,10 @@ fn version_prints_exact_line_when_long_flag_is_used() {
 
     // Then: stdout is the exact public version line
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "subtitle-renamer 0.1.0\n");
+    assert_eq!(
+        stdout(&output),
+        format!("subtitle-renamer {}\n", env!("CARGO_PKG_VERSION"))
+    );
     assert!(stderr(&output).is_empty());
 }
 
@@ -98,7 +101,10 @@ fn version_prints_exact_line_when_short_flag_is_used() {
 
     // Then: stdout is the exact public version line
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "subtitle-renamer 0.1.0\n");
+    assert_eq!(
+        stdout(&output),
+        format!("subtitle-renamer {}\n", env!("CARGO_PKG_VERSION"))
+    );
     assert!(stderr(&output).is_empty());
 }
 
