@@ -98,7 +98,7 @@ if [[ "$commit" == true ]]; then
 fi
 
 if [[ "$tag" == true ]]; then
-  git tag -a "$version" -m "v$version"
+  git tag -a "v$version" -m "v$version"
 fi
 
 if [[ "$push" == true ]]; then
