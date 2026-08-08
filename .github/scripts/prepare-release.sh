@@ -62,11 +62,11 @@ cmd_prepare() {
 
   # 2. Assert dist-dir contains EXACTLY the 5 expected asset basenames
   local expected_assets=(
-    "subtitle-renamer-desktop-${tag}-windows-x86_64-nsis.exe"
-    "subtitle-renamer-desktop-${tag}-linux-x86_64.deb"
-    "subtitle-renamer-desktop-${tag}-linux-x86_64.AppImage"
-    "subtitle-renamer-cli-${tag}-windows-x86_64.exe"
-    "subtitle-renamer-cli-${tag}-linux-x86_64"
+    "subtitle-renamer-desktop-windows-x86_64-nsis.exe"
+    "subtitle-renamer-desktop-linux-x86_64.deb"
+    "subtitle-renamer-desktop-linux-x86_64.AppImage"
+    "subtitle-renamer-cli-windows-x86_64.exe"
+    "subtitle-renamer-cli-linux-x86_64"
   )
 
   for asset in "${expected_assets[@]}"; do
@@ -359,16 +359,14 @@ if [[ "${1:-}" == "--self-test" ]]; then
     echo "$dir"
   }
 
-  # Helper: make a dist dir with exactly the 5 correct assets for a tag
   make_dist() {
     local d="${TMPBASE}/dist-${RANDOM}-$$"
-    local tag="$1"
     mkdir -p "$d"
-    touch "$d/subtitle-renamer-desktop-${tag}-windows-x86_64-nsis.exe"
-    touch "$d/subtitle-renamer-desktop-${tag}-linux-x86_64.deb"
-    touch "$d/subtitle-renamer-desktop-${tag}-linux-x86_64.AppImage"
-    touch "$d/subtitle-renamer-cli-${tag}-windows-x86_64.exe"
-    touch "$d/subtitle-renamer-cli-${tag}-linux-x86_64"
+    touch "$d/subtitle-renamer-desktop-windows-x86_64-nsis.exe"
+    touch "$d/subtitle-renamer-desktop-linux-x86_64.deb"
+    touch "$d/subtitle-renamer-desktop-linux-x86_64.AppImage"
+    touch "$d/subtitle-renamer-cli-windows-x86_64.exe"
+    touch "$d/subtitle-renamer-cli-linux-x86_64"
     echo "$d"
   }
 
@@ -376,7 +374,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   # Test 1: prepare — valid first-release, notes have history link
   # =========================================================================
   REPO1="$(setup_repo)"
-  DIST1="$(make_dist v0.1.0)"
+  DIST1="$(make_dist)"
   NOTES1="${TMPBASE}/notes1-$$.md"
   out1=""
   exit1=0
@@ -415,7 +413,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   git -C "$REPO2" push -q origin main
   git -C "$REPO2" fetch -q origin main:refs/remotes/origin/main
 
-  DIST2="$(make_dist v0.2.0)"
+  DIST2="$(make_dist)"
   NOTES2="${TMPBASE}/notes2-$$.md"
   out2=""
   exit2=0
@@ -438,7 +436,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   REPO3="$(setup_repo)"
   # Tag the current commit as v0.2.0 (higher)
   git -C "$REPO3" tag -a v0.2.0 -m "release v0.2.0"
-  DIST3="$(make_dist v0.1.0)"
+  DIST3="$(make_dist)"
   NOTES3="${TMPBASE}/notes3-$$.md"
   exit3=0
   cd "$REPO3" && bash "$SCRIPT" prepare v0.1.0 test/repo "$DIST3" "$NOTES3" >/dev/null 2>&1 || exit3=$?
@@ -457,8 +455,8 @@ if [[ "${1:-}" == "--self-test" ]]; then
   REPO4="$(setup_repo)"
   DIST4="${TMPBASE}/dist4-$$"
   mkdir -p "$DIST4"
-  touch "$DIST4/subtitle-renamer-desktop-v0.1.0-windows-x86_64-nsis.exe"
-  touch "$DIST4/subtitle-renamer-desktop-v0.1.0-linux-x86_64.deb"
+  touch "$DIST4/subtitle-renamer-desktop-windows-x86_64-nsis.exe"
+  touch "$DIST4/subtitle-renamer-desktop-linux-x86_64.deb"
   # Missing: AppImage, Windows CLI, Linux CLI
   NOTES4="${TMPBASE}/notes4-$$.md"
   exit4=0
@@ -476,7 +474,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   # Test 5: prepare — extra asset → fail
   # =========================================================================
   REPO5="$(setup_repo)"
-  DIST5="$(make_dist v0.1.0)"
+  DIST5="$(make_dist)"
   touch "${DIST5}/extra-unexpected-file.txt"
   NOTES5="${TMPBASE}/notes5-$$.md"
   exit5=0

@@ -91,8 +91,6 @@ jobs:
       - name: Build CLI
         run: cargo build -p subtitle-renamer-cli --release --locked
       - name: Stage assets
-        env:
-          TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
           rm -rf dist
@@ -102,8 +100,8 @@ jobs:
           if [[ ${#nsis_files[@]} -ne 1 ]]; then
             echo "Expected exactly 1 NSIS exe, found ${#nsis_files[@]}" >&2; exit 1
           fi
-          cp "${nsis_files[0]}" "dist/subtitle-renamer-desktop-${TAG}-windows-x86_64-nsis.exe"
-          cp target/release/subtitle-renamer.exe "dist/subtitle-renamer-cli-${TAG}-windows-x86_64.exe"
+          cp "${nsis_files[0]}" "dist/subtitle-renamer-desktop-windows-x86_64-nsis.exe"
+          cp target/release/subtitle-renamer.exe "dist/subtitle-renamer-cli-windows-x86_64.exe"
       - uses: actions/upload-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-windows-x86_64
@@ -147,8 +145,6 @@ jobs:
       - name: Build CLI
         run: cargo build -p subtitle-renamer-cli --release --locked
       - name: Stage assets
-        env:
-          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           rm -rf dist
           mkdir dist
@@ -157,14 +153,14 @@ jobs:
           if [[ ${#deb_files[@]} -ne 1 ]]; then
             echo "Expected exactly 1 deb, found ${#deb_files[@]}" >&2; exit 1
           fi
-          cp "${deb_files[0]}" "dist/subtitle-renamer-desktop-${TAG}-linux-x86_64.deb"
+          cp "${deb_files[0]}" "dist/subtitle-renamer-desktop-linux-x86_64.deb"
           # Exactly one AppImage
           appimage_files=( target/release/bundle/appimage/*.AppImage )
           if [[ ${#appimage_files[@]} -ne 1 ]]; then
             echo "Expected exactly 1 AppImage, found ${#appimage_files[@]}" >&2; exit 1
           fi
-          cp "${appimage_files[0]}" "dist/subtitle-renamer-desktop-${TAG}-linux-x86_64.AppImage"
-          cp target/release/subtitle-renamer "dist/subtitle-renamer-cli-${TAG}-linux-x86_64"
+          cp "${appimage_files[0]}" "dist/subtitle-renamer-desktop-linux-x86_64.AppImage"
+          cp target/release/subtitle-renamer "dist/subtitle-renamer-cli-linux-x86_64"
       - uses: actions/upload-artifact@v4
         with:
           name: subtitle-renamer-${{ needs.prepare.outputs.tag }}-linux-x86_64
@@ -370,22 +366,22 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           gh release upload "$TAG" \
-            "dist/subtitle-renamer-desktop-${TAG}-windows-x86_64-nsis.exe" \
-            "dist/subtitle-renamer-desktop-${TAG}-linux-x86_64.deb" \
-            "dist/subtitle-renamer-desktop-${TAG}-linux-x86_64.AppImage" \
-            "dist/subtitle-renamer-cli-${TAG}-windows-x86_64.exe" \
-            "dist/subtitle-renamer-cli-${TAG}-linux-x86_64" \
+            "dist/subtitle-renamer-desktop-windows-x86_64-nsis.exe" \
+            "dist/subtitle-renamer-desktop-linux-x86_64.deb" \
+            "dist/subtitle-renamer-desktop-linux-x86_64.AppImage" \
+            "dist/subtitle-renamer-cli-windows-x86_64.exe" \
+            "dist/subtitle-renamer-cli-linux-x86_64" \
             "dist/checksums.txt"
       - name: Verify uploaded assets
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           expected_names=(
-            "subtitle-renamer-desktop-${TAG}-windows-x86_64-nsis.exe"
-            "subtitle-renamer-desktop-${TAG}-linux-x86_64.deb"
-            "subtitle-renamer-desktop-${TAG}-linux-x86_64.AppImage"
-            "subtitle-renamer-cli-${TAG}-windows-x86_64.exe"
-            "subtitle-renamer-cli-${TAG}-linux-x86_64"
+            "subtitle-renamer-desktop-windows-x86_64-nsis.exe"
+            "subtitle-renamer-desktop-linux-x86_64.deb"
+            "subtitle-renamer-desktop-linux-x86_64.AppImage"
+            "subtitle-renamer-cli-windows-x86_64.exe"
+            "subtitle-renamer-cli-linux-x86_64"
             "checksums.txt"
           )
           actual_names=$(gh release view "$TAG" --json assets --jq '[.assets[].name] | sort | join("\n")')
